@@ -5,7 +5,7 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(undefined)
-  const [profile, setProfile] = useState(null)
+  const [profile, setProfile] = useState(undefined)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -18,6 +18,7 @@ export function AuthProvider({ children }) {
       if (session) fetchProfile(session.user.id)
       else setProfile(null)
     })
+
 
     return () => subscription.unsubscribe()
   }, [])
@@ -45,7 +46,7 @@ export function AuthProvider({ children }) {
 
   const isAdmin = profile?.role === 'admin'
   const intakeCompleted = profile?.intake_completed === true
-  const loading = session === undefined
+  const loading = session === undefined || (session !== null && profile === undefined)
 
   return (
     <AuthContext.Provider value={{ session, profile, isAdmin, intakeCompleted, loading, signIn, signOut, refreshProfile }}>
