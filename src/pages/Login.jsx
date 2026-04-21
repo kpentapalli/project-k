@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
 export default function Login() {
-  const { signIn } = useAuth()
+  const { signIn, session, profile, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -14,6 +14,13 @@ export default function Login() {
   const [resetSent, setResetSent] = useState(false)
   const [resetLoading, setResetLoading] = useState(false)
 
+  // Navigate only after session AND profile are both fully loaded
+  useEffect(() => {
+    if (!authLoading && session && profile !== undefined) {
+      navigate('/', { replace: true })
+    }
+  }, [authLoading, session, profile])
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
@@ -22,9 +29,8 @@ export default function Login() {
     setLoading(false)
     if (error) {
       setError('Invalid email or password.')
-    } else {
-      navigate('/')
     }
+    // navigation is handled by the useEffect above
   }
 
   async function handleReset(e) {
