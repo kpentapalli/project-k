@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import Login from './pages/Login'
+import ResetPassword from './pages/ResetPassword'
 import Intake from './pages/Intake'
 import Dashboard from './pages/Dashboard'
 import Program from './pages/Program'
@@ -13,6 +14,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           <Route path="/intake" element={
             <ProtectedRoute><Intake /></ProtectedRoute>

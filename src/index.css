@@ -88,6 +88,8 @@ a { color: var(--acc); text-decoration: none; }
 .auth-form { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
 .auth-error { color: var(--danger); font-size: 0.85rem; }
 .auth-note { color: var(--muted); font-size: 0.78rem; margin-top: 16px; text-align: center; }
+.auth-link { color: var(--muted2); font-size: 0.82rem; text-align: center; text-decoration: underline; background: none; border: none; cursor: pointer; padding: 4px; }
+.auth-link:hover { color: var(--acc); }
 
 /* ── Intake ── */
 .intake-screen {
