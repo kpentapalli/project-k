@@ -550,6 +550,81 @@ a { color: var(--acc); text-decoration: none; }
 
 .assign-section { display: flex; flex-direction: column; gap: 14px; }
 
+/* ── Feedback ── */
+.feedback-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 150;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  transition: border-color 0.15s, transform 0.15s;
+}
+.feedback-fab:hover { border-color: var(--acc); transform: scale(1.08); }
+
+.feedback-modal { gap: 14px; }
+
+.rating-row { display: flex; gap: 8px; }
+.rating-chip {
+  font-size: 1.4rem;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border2);
+  transition: all 0.15s;
+  background: var(--card);
+}
+.rating-chip:hover { border-color: var(--acc); transform: scale(1.1); }
+.rating-chip.active { border-color: var(--acc); background: rgba(57,255,138,0.1); transform: scale(1.1); }
+
+.feedback-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+.feedback-actions .modal-close { width: auto; padding: 10px 18px; }
+
+.feedback-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 0;
+  font-size: 1rem;
+  color: var(--acc);
+}
+.feedback-done-icon {
+  font-size: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(57,255,138,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Admin feedback list */
+.admin-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+.feedback-list { display: flex; flex-direction: column; gap: 10px; }
+.feedback-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.feedback-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.feedback-user { font-size: 0.82rem; font-weight: 700; color: var(--acc); }
+.feedback-date { font-size: 0.72rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+.feedback-rating { font-size: 1.1rem; }
+.feedback-message { font-size: 0.88rem; color: var(--muted2); line-height: 1.6; }
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }

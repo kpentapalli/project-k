@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import TopBar from '../components/TopBar'
+import FeedbackButton from '../components/FeedbackButton'
 
 export default function Program() {
   const { session } = useAuth()
@@ -196,6 +197,7 @@ export default function Program() {
   return (
     <div className="page">
       <TopBar active="program" />
+      <FeedbackButton />
       <div className="page-content">
         <div className="hero">
           <div className="hero-label">PROGRAM 01 · {program.duration_weeks} WEEKS · {program.days_per_week} DAYS/WK</div>

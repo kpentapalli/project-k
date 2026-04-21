@@ -5,16 +5,19 @@ import TopBar from '../components/TopBar'
 export default function Admin() {
   const [users, setUsers] = useState([])
   const [programs, setPrograms] = useState([])
+  const [feedback, setFeedback] = useState([])
   const [selected, setSelected] = useState(null)
   const [assignForm, setAssignForm] = useState({ program_id: '', start_date: '' })
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('users')
 
   useEffect(() => {
     async function load() {
-      const [usersRes, programsRes] = await Promise.all([
+      const [usersRes, programsRes, feedbackRes] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at'),
         supabase.from('programs').select('*').eq('is_active', true).order('name'),
+        supabase.from('feedback').select('*').order('created_at', { ascending: false }),
       ])
       const profiles = usersRes.data || []
 
@@ -38,6 +41,7 @@ export default function Admin() {
 
       setUsers(enriched)
       setPrograms(programsRes.data || [])
+      setFeedback(feedbackRes.data || [])
       setLoading(false)
     }
     load()
@@ -82,10 +86,38 @@ export default function Admin() {
       <div className="page-content">
         <div className="hero">
           <div className="hero-label">ADMIN</div>
-          <h1 className="hero-title">USER MANAGEMENT</h1>
+          <h1 className="hero-title">DASHBOARD</h1>
         </div>
 
-        <div className="admin-layout">
+        <div className="admin-tabs">
+          <button className={`week-tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
+            Users ({users.length})
+          </button>
+          <button className={`week-tab ${activeTab === 'feedback' ? 'active' : ''}`} onClick={() => setActiveTab('feedback')}>
+            Feedback {feedback.length > 0 && `(${feedback.length})`}
+          </button>
+        </div>
+
+        {activeTab === 'feedback' && (
+          <div className="feedback-list">
+            {feedback.length === 0 ? (
+              <p className="empty-state">No feedback yet.</p>
+            ) : (
+              feedback.map(f => (
+                <div className="feedback-item" key={f.id}>
+                  <div className="feedback-meta">
+                    <span className="feedback-user">{f.user_name || 'Unknown'}</span>
+                    <span className="feedback-date">{new Date(f.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    {f.rating && <span className="feedback-rating">{'😤😐🙂😄🔥'.split('')[f.rating - 1]}</span>}
+                  </div>
+                  <div className="feedback-message">{f.message}</div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === 'users' && <div className="admin-layout">
           <div className="admin-user-list">
             <div className="section-title">Users ({users.length})</div>
             {users.map(user => (
@@ -157,7 +189,7 @@ export default function Admin() {
               </div>
             </div>
           )}
-        </div>
+        </div>}
       </div>
     </div>
   )

@@ -80,6 +80,27 @@ create table if not exists public.exercise_swaps (
 );
 
 
+create table if not exists public.feedback (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid references public.profiles(id) on delete set null,
+  user_name  text,
+  message    text not null,
+  rating     int check (rating between 1 and 5),
+  created_at timestamptz not null default now()
+);
+
+alter table public.feedback enable row level security;
+
+drop policy if exists "users can insert feedback" on public.feedback;
+create policy "users can insert feedback"
+  on public.feedback for insert
+  with check (auth.uid() is not null);
+
+drop policy if exists "admin reads all feedback" on public.feedback;
+create policy "admin reads all feedback"
+  on public.feedback for select
+  using (public.is_admin());
+
 -- ── Auto-create profile on signup ───────
 
 create or replace function public.handle_new_user()

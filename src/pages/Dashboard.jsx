@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import TopBar from '../components/TopBar'
+import FeedbackButton from '../components/FeedbackButton'
 
 const MUSCLES = ['Chest', 'Shoulders', 'Triceps', 'Back', 'Traps', 'Biceps', 'Legs', 'Calves', 'Abs']
 
@@ -91,6 +92,7 @@ export default function Dashboard() {
   return (
     <div className="page">
       <TopBar active="dashboard" />
+      <FeedbackButton />
 
       <div className="page-content">
         <div className="hero">
