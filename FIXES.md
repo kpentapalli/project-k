@@ -93,6 +93,18 @@ where id = (select id from auth.users where email = 'kpentapalli@gmail.com');
 
 ---
 
+## F013 — Feedback button: feedback table missing
+**Problem:** After deploying the feedback button, submitting feedback failed because the `feedback` table didn't exist in Supabase yet.  
+**Fix:** Added SQL to create the table with RLS policies (insert for all authenticated users, select for admin only). Run in Supabase SQL Editor.
+
+---
+
+## F014 — Intake form appearing on every login
+**Problem:** After signing in, `navigate('/')` fired immediately before the profile finished loading from Supabase. ProtectedRoute briefly saw `profile = null` → `isAdmin = false` → `intakeCompleted = false` → redirected to `/intake`.  
+**Fix:** Removed `navigate('/')` from the login submit handler. Added a `useEffect` in Login.jsx that navigates only after both `session` and `profile` are fully loaded (i.e., `!authLoading && session && profile !== undefined`).
+
+---
+
 ## F012 — Duplicate program assignment on SQL insert
 **Problem:** A program assignment already existed for the admin user. Running an `INSERT` hit the unique constraint on `user_id`.  
 **Fix:** Used `UPDATE` instead of `INSERT`:
