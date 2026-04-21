@@ -31,6 +31,10 @@ export function AuthProvider({ children }) {
     setProfile(data)
   }
 
+  async function refreshProfile(userId) {
+    await fetchProfile(userId)
+  }
+
   async function signIn(email, password) {
     return supabase.auth.signInWithPassword({ email, password })
   }
@@ -44,7 +48,7 @@ export function AuthProvider({ children }) {
   const loading = session === undefined
 
   return (
-    <AuthContext.Provider value={{ session, profile, isAdmin, intakeCompleted, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, profile, isAdmin, intakeCompleted, loading, signIn, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

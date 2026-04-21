@@ -9,7 +9,7 @@ const DAYS = ['3', '4', '5', '6']
 const EQUIPMENT = ['Full Gym', 'Home Gym', 'Minimal (bands/bodyweight)']
 
 export default function Intake() {
-  const { session } = useAuth()
+  const { session, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -36,7 +36,8 @@ export default function Intake() {
 
     const { error } = await supabase
       .from('profiles')
-      .update({
+      .upsert({
+        id: session.user.id,
         full_name: form.full_name,
         goal: form.goal.toLowerCase().replace(' ', '_'),
         experience: form.experience.toLowerCase(),
@@ -47,13 +48,13 @@ export default function Intake() {
         weight_target: form.weight_target ? parseFloat(form.weight_target) : null,
         intake_completed: true,
       })
-      .eq('id', session.user.id)
 
     setSaving(false)
 
     if (error) {
-      setError('Something went wrong. Please try again.')
+      setError('Something went wrong: ' + error.message)
     } else {
+      await refreshProfile(session.user.id)
       navigate('/dashboard')
     }
   }
