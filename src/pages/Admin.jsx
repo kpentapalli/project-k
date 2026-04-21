@@ -13,7 +13,7 @@ export default function Admin() {
   useEffect(() => {
     async function load() {
       const [usersRes, programsRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('role', 'user').order('created_at'),
+        supabase.from('profiles').select('*').order('created_at'),
         supabase.from('programs').select('*').eq('is_active', true).order('name'),
       ])
       const profiles = usersRes.data || []
