@@ -93,39 +93,6 @@ where id = (select id from auth.users where email = 'kpentapalli@gmail.com');
 
 ---
 
-## F017 — Intake form RLS error for regular users
-**Problem:** Non-admin users getting "new row violates row-level security policy for table profiles" when submitting intake. The `upsert` operation always attempts an INSERT first (even when the row exists), which hit the INSERT policy check unexpectedly.  
-**Fix:** Changed intake form from `upsert` to `update`. The trigger reliably creates the profile row when a user is created via the Supabase dashboard, so an INSERT is never needed — `update` is sufficient and avoids the RLS conflict entirely.
-
----
-
-## F016 — Progress bar label clipped and invisible
-**Problem:** The "0 / 42 sets" label under the progress bar was invisible — it was nested inside the `.progress-bar-wrap` div which had `height: 6px` and `overflow: hidden`, clipping the text entirely. Only the thin bar track was visible, appearing as an artifact above the first exercise group.  
-**Fix:** Moved the `.progress-label` div outside of `.progress-bar-wrap` so it renders below the bar without being clipped.
-
----
-
-## F015 — Auth emails linking to localhost instead of Vercel app
-**Problem:** Password reset and invite emails sent to users contained `localhost` links, making them unusable.  
-**Root cause:** Supabase defaults the Site URL to `http://localhost:5173` (Vite's dev server).  
-**Fix:** In Supabase → Authentication → URL Configuration:
-- Set **Site URL** to `https://project-k-ten-mu.vercel.app`
-- Add `https://project-k-ten-mu.vercel.app/**` to **Redirect URLs**
-
----
-
-## F013 — Feedback button: feedback table missing
-**Problem:** After deploying the feedback button, submitting feedback failed because the `feedback` table didn't exist in Supabase yet.  
-**Fix:** Added SQL to create the table with RLS policies (insert for all authenticated users, select for admin only). Run in Supabase SQL Editor.
-
----
-
-## F014 — Intake form appearing on every login
-**Problem:** After signing in, `navigate('/')` fired immediately before the profile finished loading from Supabase. ProtectedRoute briefly saw `profile = null` → `isAdmin = false` → `intakeCompleted = false` → redirected to `/intake`.  
-**Fix:** Removed `navigate('/')` from the login submit handler. Added a `useEffect` in Login.jsx that navigates only after both `session` and `profile` are fully loaded (i.e., `!authLoading && session && profile !== undefined`).
-
----
-
 ## F012 — Duplicate program assignment on SQL insert
 **Problem:** A program assignment already existed for the admin user. Running an `INSERT` hit the unique constraint on `user_id`.  
 **Fix:** Used `UPDATE` instead of `INSERT`:
@@ -138,11 +105,36 @@ where user_id = (select id from auth.users where email = 'kpentapalli@gmail.com'
 
 ---
 
-## F019 — Intake form shown on every login after session lapse
-**Root cause:** `AuthContext` used both `getSession()` and `onAuthStateChange`. When the app loaded with no existing session, `onAuthStateChange` fired `INITIAL_SESSION` with null → `setProfile(null)`. When the user then logged in and `SIGNED_IN` fired, `loading = session!==null && profile===undefined` evaluated to `false` because profile was already `null` (not `undefined`). ProtectedRoute rendered immediately with stale `profile=null` → `isAdmin=false, intakeCompleted=false` → redirected to `/intake`.  
-**Fix:**
-- Removed the redundant `getSession()` call — `onAuthStateChange` already emits `INITIAL_SESSION` on subscribe, covering the same case
-- Added `setProfile(undefined)` at the top of the `SIGNED_IN` handler to reset the profile state before fetching, so the `profile===undefined` loading gate re-engages and ProtectedRoute waits for the real profile data
+## F013 — Feedback button: feedback table missing
+**Problem:** After deploying the feedback button, submitting feedback failed because the `feedback` table didn't exist in Supabase yet.  
+**Fix:** Added SQL to create the table with RLS policies (insert for all authenticated users, select for admin only). Run in Supabase SQL Editor.
+
+---
+
+## F014 — Intake form appearing on every login (first fix attempt)
+**Problem:** After signing in, `navigate('/')` fired immediately before the profile finished loading from Supabase. ProtectedRoute briefly saw `profile = null` → `isAdmin = false` → `intakeCompleted = false` → redirected to `/intake`.  
+**Fix:** Removed `navigate('/')` from the login submit handler. Added a `useEffect` in Login.jsx that navigates only after both `session` and `profile` are fully loaded (i.e., `!authLoading && session && profile !== undefined`).
+
+---
+
+## F015 — Auth emails linking to localhost instead of Vercel app
+**Problem:** Password reset and invite emails sent to users contained `localhost` links, making them unusable.  
+**Root cause:** Supabase defaults the Site URL to `http://localhost:5173` (Vite's dev server).  
+**Fix:** In Supabase → Authentication → URL Configuration:
+- Set **Site URL** to `https://project-k-ten-mu.vercel.app`
+- Add `https://project-k-ten-mu.vercel.app/**` to **Redirect URLs**
+
+---
+
+## F016 — Progress bar label clipped and invisible
+**Problem:** The "0 / 42 sets" label under the progress bar was invisible — it was nested inside the `.progress-bar-wrap` div which had `height: 6px` and `overflow: hidden`, clipping the text entirely. Only the thin bar track was visible, appearing as an artifact above the first exercise group.  
+**Fix:** Moved the `.progress-label` div outside of `.progress-bar-wrap` so it renders below the bar without being clipped.
+
+---
+
+## F017 — Intake form RLS error for regular users
+**Problem:** Non-admin users getting "new row violates row-level security policy for table profiles" when submitting intake. The `upsert` operation always attempts an INSERT first (even when the row exists), which hit the INSERT policy check unexpectedly.  
+**Fix:** Changed intake form from `upsert` to `update`. The trigger reliably creates the profile row when a user is created via the Supabase dashboard, so an INSERT is never needed — `update` is sufficient and avoids the RLS conflict entirely.
 
 ---
 
@@ -154,3 +146,11 @@ where user_id = (select id from auth.users where email = 'kpentapalli@gmail.com'
 - `confirmFinishWorkout()` stores the date as noon UTC (`T12:00:00Z`) to make `.slice(0, 10)` date extraction timezone-safe everywhere
 - Added `.date-input` dark-theme CSS (native date inputs are nearly invisible on dark backgrounds without `color-scheme: dark`)
 - No schema changes needed — `completed_at` column already existed
+
+---
+
+## F019 — Intake form shown on every login after session lapse
+**Root cause:** `AuthContext` used both `getSession()` and `onAuthStateChange`. When the app loaded with no existing session, `onAuthStateChange` fired `INITIAL_SESSION` with null → `setProfile(null)`. When the user then logged in and `SIGNED_IN` fired, `loading = session!==null && profile===undefined` evaluated to `false` because profile was already `null` (not `undefined`). ProtectedRoute rendered immediately with stale `profile=null` → `isAdmin=false, intakeCompleted=false` → redirected to `/intake`.  
+**Fix:**
+- Removed the redundant `getSession()` call — `onAuthStateChange` already emits `INITIAL_SESSION` on subscribe, covering the same case
+- Added `setProfile(undefined)` at the top of the `SIGNED_IN` handler to reset the profile state before fetching, so the `profile===undefined` loading gate re-engages and ProtectedRoute waits for the real profile data

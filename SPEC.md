@@ -352,27 +352,61 @@ These are explicitly deferred to Phase 2+:
 
 ---
 
-## 9. Phase 2 Preview (not spec'd yet)
+## 9. Phase 2 — Shipped
 
-- Admin custom program builder (drag-and-drop week/day/exercise editor)
-- Per-user progress charts (weight over time, volume over time)
-- Custom domain + branding
-- Email reminders (Supabase Edge Functions + Resend)
-- Program completion flow (what happens when a user finishes their program)
+### P1 — Date-accurate workout logging ✅
+**Problem:** `completed_at` was always stamped `now()`, making the muscle heatmap and streak inaccurate and preventing back-dating.  
+**What shipped:**
+- "Finish & Log Workout" now opens a date picker modal (defaults to today, blocks future dates)
+- Modal shows workout context (week, day, title) and a hint about back-dating
+- Dates stored as noon UTC (`T12:00:00Z`) to keep `.slice(0, 10)` timezone-safe everywhere
+- Enables historical logging: navigate to any past week/day and log it with the actual date
 
-### Exercise Media (Phase 2+)
-**Concept:** Each exercise card shows a simplified icon or graphic inline. Tapping a detail button opens a full exercise view with 3 photos showing the movement: start position → mid-transition → end position.
-
-**Implementation thoughts:**
-- **Phase 1 of this feature:** Simplified SVG icons or illustration per muscle group (not per exercise) — low effort, adds visual context
-- **Phase 2 of this feature:** Per-exercise photo set (3 images) stored in Supabase Storage, linked from the `exercise` object in the program structure JSON
-- Exercise detail view: full-screen modal or dedicated page with photos, technique note, common mistakes, and swap options
-- Images could be sourced from a licensed library or custom-shot — needs a decision before building
-- JSON shape addition: `{ name, sets, reps, note, swap_category, media: { icon: "chest_press", photos: ["start.jpg", "mid.jpg", "end.jpg"] } }`
+**Files changed:** `src/pages/Program.jsx`, `src/index.css`
 
 ---
 
-## 10. Build Order (Phase 1)
+### P2 — Self-service signup with admin approval ✅
+**Problem:** Admin had to manually create users in the Supabase dashboard, hitting rate limits and not scaling.  
+**What shipped:**
+- `/request-access` — public page (no auth required): name, email, optional "why I want in" note
+- `access_requests` table in Supabase (status: pending/approved/rejected, RLS: anon INSERT, admin SELECT/UPDATE)
+- Admin dashboard **Requests tab** — shows pending count badge, each request has Approve/Reject buttons
+- `/api/invite` — Vercel serverless function: verifies caller is admin, calls `supabase.auth.admin.inviteUserByEmail()` with service role key (server-side only, never exposed to browser), marks request approved
+- Login page links to `/request-access`
+
+**New route:** `/request-access` (public)  
+**New files:** `api/invite.js`, `src/pages/RequestAccess.jsx`  
+**Files changed:** `src/App.jsx`, `src/pages/Admin.jsx`, `src/pages/Login.jsx`, `supabase/schema.sql`, `vercel.json`
+
+**Required Vercel env var:** `SUPABASE_SERVICE_ROLE_KEY`
+
+---
+
+## 10. Phase 2 — Remaining Roadmap (priority order)
+
+| Priority | Feature | Notes |
+|----------|---------|-------|
+| 🔴 Next | Muscle recovery graph | Date data now accurate — good time to build |
+| 🔴 Next | Progress charts | Weight over time, volume over time, adherence |
+| 🟡 Soon | Program completion flow | What happens when user finishes week 6/8 |
+| 🟡 Soon | Admin program builder | Create/edit programs without SQL |
+| 🟢 Quick win | Exercise YouTube search | Link icon on exercise card → YouTube search in new tab |
+| 🟢 Polish | Custom domain | projectk.fit or similar |
+| 🟢 Polish | Email reminders | Edge Functions + Resend — "haven't logged in 3 days" |
+| ⏳ Later | Exercise media | SVG icons → per-exercise photos in Supabase Storage |
+| ⏳ Phase 3 | Diet / nutrition tracking | Macros, meal logging — separate product surface |
+| ⏳ Phase 3 | Mobile app | React Native, after web is solid |
+
+### Exercise Media — Design Notes (when ready)
+- **Quick version:** SVG icon per muscle group inline on exercise cards (low effort)
+- **Full version:** 3-photo sequence per exercise (start → mid → end) stored in Supabase Storage
+- JSON shape extension: `{ name, sets, reps, note, swap_category, media: { icon: "chest_press", photos: ["start.jpg", "mid.jpg", "end.jpg"] } }`
+- Images: licensed library or custom-shot — decision needed before building
+
+---
+
+## 11. Build Order (Phase 1)
 
 1. **Scaffold** — Create React + Vite project, connect Supabase, deploy to Vercel
 2. **Auth** — Login page, session management, route protection
@@ -381,7 +415,3 @@ These are explicitly deferred to Phase 2+:
 5. **Admin dashboard** — User list, intake viewer, program assignment
 6. **User dashboard** — Port existing dashboard to read from Supabase
 7. **Program view + logging** — Port existing workout UI, wire to Supabase
-
----
-
-*This spec covers Phase 1 only. Phase 2 will be spec'd after Phase 1 ships.*
