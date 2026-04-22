@@ -203,6 +203,35 @@ create policy "users manage own swaps"
   using (user_id = auth.uid());
 
 
+-- access_requests (public sign-up flow)
+create table if not exists public.access_requests (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null,
+  email      text not null,
+  message    text,
+  status     text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  created_at timestamptz not null default now()
+);
+
+alter table public.access_requests enable row level security;
+
+drop policy if exists "anyone can submit access request" on public.access_requests;
+create policy "anyone can submit access request"
+  on public.access_requests for insert
+  to anon, authenticated
+  with check (true);
+
+drop policy if exists "admin reads all requests" on public.access_requests;
+create policy "admin reads all requests"
+  on public.access_requests for select
+  using (public.is_admin());
+
+drop policy if exists "admin updates request status" on public.access_requests;
+create policy "admin updates request status"
+  on public.access_requests for update
+  using (public.is_admin());
+
+
 -- ── After running this: ──────────────────
 -- 1. Sign up via the app
 -- 2. Promote yourself to admin:

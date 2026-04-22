@@ -6,18 +6,21 @@ export default function Admin() {
   const [users, setUsers] = useState([])
   const [programs, setPrograms] = useState([])
   const [feedback, setFeedback] = useState([])
+  const [requests, setRequests] = useState([])
   const [selected, setSelected] = useState(null)
   const [assignForm, setAssignForm] = useState({ program_id: '', start_date: '' })
   const [saving, setSaving] = useState(false)
+  const [approvingId, setApprovingId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('users')
 
   useEffect(() => {
     async function load() {
-      const [usersRes, programsRes, feedbackRes] = await Promise.all([
+      const [usersRes, programsRes, feedbackRes, requestsRes] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at'),
         supabase.from('programs').select('*').eq('is_active', true).order('name'),
         supabase.from('feedback').select('*').order('created_at', { ascending: false }),
+        supabase.from('access_requests').select('*').order('created_at', { ascending: false }),
       ])
       const profiles = usersRes.data || []
 
@@ -42,6 +45,7 @@ export default function Admin() {
       setUsers(enriched)
       setPrograms(programsRes.data || [])
       setFeedback(feedbackRes.data || [])
+      setRequests(requestsRes.data || [])
       setLoading(false)
     }
     load()
@@ -78,6 +82,31 @@ export default function Admin() {
     setSaving(false)
   }
 
+  async function approveRequest(req) {
+    setApprovingId(req.id)
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/invite', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ email: req.email, name: req.name, requestId: req.id }),
+    })
+    const result = await res.json()
+    if (res.ok) {
+      setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: 'approved' } : r))
+    } else {
+      alert('Invite failed: ' + result.error)
+    }
+    setApprovingId(null)
+  }
+
+  async function rejectRequest(req) {
+    await supabase.from('access_requests').update({ status: 'rejected' }).eq('id', req.id)
+    setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: 'rejected' } : r))
+  }
+
   if (loading) return <div className="loading-screen">Loading...</div>
 
   return (
@@ -92,6 +121,12 @@ export default function Admin() {
         <div className="admin-tabs">
           <button className={`week-tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
             Users ({users.length})
+          </button>
+          <button className={`week-tab ${activeTab === 'requests' ? 'active' : ''}`} onClick={() => setActiveTab('requests')}>
+            Requests
+            {requests.filter(r => r.status === 'pending').length > 0 && (
+              <span className="tab-badge">{requests.filter(r => r.status === 'pending').length}</span>
+            )}
           </button>
           <button className={`week-tab ${activeTab === 'feedback' ? 'active' : ''}`} onClick={() => setActiveTab('feedback')}>
             Feedback {feedback.length > 0 && `(${feedback.length})`}
@@ -111,6 +146,48 @@ export default function Admin() {
                     {f.rating && <span className="feedback-rating">{'😤😐🙂😄🔥'.split('')[f.rating - 1]}</span>}
                   </div>
                   <div className="feedback-message">{f.message}</div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === 'requests' && (
+          <div className="request-list">
+            {requests.length === 0 ? (
+              <p className="empty-state">No access requests yet.</p>
+            ) : (
+              requests.map(req => (
+                <div className={`request-card request-card-${req.status}`} key={req.id}>
+                  <div className="request-header">
+                    <div className="request-identity">
+                      <div className="request-name">{req.name}</div>
+                      <div className="request-email">{req.email}</div>
+                    </div>
+                    <div className="request-meta-right">
+                      <span className={`badge ${req.status === 'pending' ? 'badge-warn' : req.status === 'approved' ? 'badge-green' : 'badge-muted'}`}>
+                        {req.status}
+                      </span>
+                      <div className="request-date">
+                        {new Date(req.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </div>
+                    </div>
+                  </div>
+                  {req.message && <div className="request-message">"{req.message}"</div>}
+                  {req.status === 'pending' && (
+                    <div className="request-actions">
+                      <button
+                        className="btn-approve"
+                        onClick={() => approveRequest(req)}
+                        disabled={approvingId === req.id}
+                      >
+                        {approvingId === req.id ? 'Sending invite...' : '✓ Approve & Invite'}
+                      </button>
+                      <button className="btn-reject" onClick={() => rejectRequest(req)}>
+                        ✕ Reject
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))
             )}

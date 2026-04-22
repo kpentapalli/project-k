@@ -120,7 +120,10 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="auth-note">Access is by invite only.</p>
+        <p className="auth-note">
+          No account?{' '}
+          <a href="/request-access" className="auth-link-inline">Request access</a>
+        </p>
       </div>
     </div>
   )
