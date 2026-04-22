@@ -80,6 +80,28 @@ create table if not exists public.exercise_swaps (
 );
 
 
+create table if not exists public.weight_logs (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references public.profiles(id) on delete cascade,
+  weight     numeric not null,
+  body_fat   numeric,
+  logged_at  date not null default current_date,
+  created_at timestamptz not null default now()
+);
+
+alter table public.weight_logs enable row level security;
+
+drop policy if exists "users manage own weight logs" on public.weight_logs;
+create policy "users manage own weight logs"
+  on public.weight_logs for all
+  using (user_id = auth.uid());
+
+drop policy if exists "admin reads all weight logs" on public.weight_logs;
+create policy "admin reads all weight logs"
+  on public.weight_logs for select
+  using (public.is_admin());
+
+
 create table if not exists public.feedback (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid references public.profiles(id) on delete set null,
