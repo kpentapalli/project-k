@@ -16,6 +16,8 @@ export default function Program() {
   const [openCard, setOpenCard] = useState(null)
   const [swapTarget, setSwapTarget] = useState(null)
   const [timers, setTimers] = useState({})
+  const [showDateModal, setShowDateModal] = useState(false)
+  const [workoutDate, setWorkoutDate] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -148,9 +150,16 @@ export default function Program() {
     setSwapTarget(null)
   }
 
-  async function finishWorkout() {
+  function openFinishModal() {
     if (isDayComplete(currentWeek, currentDay)) return
+    setWorkoutDate(new Date().toISOString().slice(0, 10))
+    setShowDateModal(true)
+  }
+
+  async function confirmFinishWorkout() {
     const day = getDayData(currentWeek, currentDay)
+    // Store as noon UTC so date slicing is always timezone-safe
+    const completedAt = new Date(workoutDate + 'T12:00:00Z').toISOString()
     const { data } = await supabase.from('workout_logs').insert({
       user_id: session.user.id,
       program_id: assignment.program_id,
@@ -158,9 +167,10 @@ export default function Program() {
       day_index: currentDay,
       day_title: day?.title,
       muscle_groups: day?.groups?.map(g => g.name) || [],
-      completed_at: new Date().toISOString(),
+      completed_at: completedAt,
     }).select().single()
     if (data) setLogs(prev => [...prev, data])
+    setShowDateModal(false)
   }
 
   function startTimer(key) {
@@ -300,7 +310,7 @@ export default function Program() {
 
             <button
               className={`btn-finish ${complete ? 'btn-finish-done' : ''}`}
-              onClick={finishWorkout}
+              onClick={openFinishModal}
               disabled={complete}
             >
               {complete ? '✓ Workout Logged' : 'Finish & Log Workout'}
@@ -308,6 +318,33 @@ export default function Program() {
           </div>
         )}
       </div>
+
+      {showDateModal && (
+        <div className="modal-bg" onClick={() => setShowDateModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-title">When did you finish?</div>
+            <div className="modal-sub">
+              Week {currentWeek + 1} · Day {currentDay + 1}
+              {day?.title ? ` — ${day.title}` : ''}
+            </div>
+            <div className="date-field">
+              <label className="date-label">Workout date</label>
+              <input
+                type="date"
+                className="date-input"
+                value={workoutDate}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={e => setWorkoutDate(e.target.value)}
+              />
+              <p className="date-hint">Back-date if you're logging a missed session.</p>
+            </div>
+            <button className="btn-primary" onClick={confirmFinishWorkout} disabled={!workoutDate}>
+              Log Workout
+            </button>
+            <button className="modal-close" onClick={() => setShowDateModal(false)}>✕ Cancel</button>
+          </div>
+        </div>
+      )}
 
       {swapTarget && (() => {
         const { wk, day: d, gi, ei } = swapTarget

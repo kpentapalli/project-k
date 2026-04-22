@@ -498,6 +498,24 @@ a { color: var(--acc); text-decoration: none; }
 }
 .modal-close:hover { color: var(--danger); border-color: var(--danger); }
 
+/* ── Date picker (log workout modal) ── */
+.date-field { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 12px; }
+.date-label { font-size: 0.75rem; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.06em; }
+.date-input {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--fg);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  padding: 10px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  color-scheme: dark;
+}
+.date-input:focus { outline: none; border-color: var(--acc); }
+.date-hint { font-size: 0.75rem; color: var(--muted2); margin: 0; }
+
 /* ── Admin ── */
 .admin-layout { display: grid; grid-template-columns: 1fr; gap: 24px; }
 @media (min-width: 640px) { .admin-layout { grid-template-columns: 260px 1fr; } }

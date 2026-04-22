@@ -135,3 +135,14 @@ set program_id = (select id from public.programs where name = 'The 6-Week Cut'),
     start_date = current_date
 where user_id = (select id from auth.users where email = 'kpentapalli@gmail.com');
 ```
+
+---
+
+## F018 — Workout date always stamped as now(), breaking heatmap and streak
+**Problem:** `finishWorkout()` always wrote `completed_at: new Date().toISOString()`, so every log was stamped at the moment of logging — not when the workout actually happened. This made the muscle recovery heatmap inaccurate, broke streak calculations for anyone who logs after the fact, and made historical back-filling impossible.  
+**Fix:**
+- Replaced the one-click `finishWorkout()` with a two-step flow: clicking "Finish & Log Workout" opens a date picker modal
+- Modal defaults to today, allows any past date (no future dates via `max` attribute), and displays the workout context (week, day, title)
+- `confirmFinishWorkout()` stores the date as noon UTC (`T12:00:00Z`) to make `.slice(0, 10)` date extraction timezone-safe everywhere
+- Added `.date-input` dark-theme CSS (native date inputs are nearly invisible on dark backgrounds without `color-scheme: dark`)
+- No schema changes needed — `completed_at` column already existed
