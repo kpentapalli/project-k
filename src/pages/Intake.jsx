@@ -36,8 +36,7 @@ export default function Intake() {
 
     const { error } = await supabase
       .from('profiles')
-      .upsert({
-        id: session.user.id,
+      .update({
         full_name: form.full_name,
         goal: form.goal.toLowerCase().replace(' ', '_'),
         experience: form.experience.toLowerCase(),
@@ -48,6 +47,7 @@ export default function Intake() {
         weight_target: form.weight_target ? parseFloat(form.weight_target) : null,
         intake_completed: true,
       })
+      .eq('id', session.user.id)
 
     setSaving(false)
 
