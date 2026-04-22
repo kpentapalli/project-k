@@ -93,6 +93,15 @@ where id = (select id from auth.users where email = 'kpentapalli@gmail.com');
 
 ---
 
+## F015 — Auth emails linking to localhost instead of Vercel app
+**Problem:** Password reset and invite emails sent to users contained `localhost` links, making them unusable.  
+**Root cause:** Supabase defaults the Site URL to `http://localhost:5173` (Vite's dev server).  
+**Fix:** In Supabase → Authentication → URL Configuration:
+- Set **Site URL** to `https://project-k-ten-mu.vercel.app`
+- Add `https://project-k-ten-mu.vercel.app/**` to **Redirect URLs**
+
+---
+
 ## F013 — Feedback button: feedback table missing
 **Problem:** After deploying the feedback button, submitting feedback failed because the `feedback` table didn't exist in Supabase yet.  
 **Fix:** Added SQL to create the table with RLS policies (insert for all authenticated users, select for admin only). Run in Supabase SQL Editor.
