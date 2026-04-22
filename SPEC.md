@@ -360,6 +360,16 @@ These are explicitly deferred to Phase 2+:
 - Email reminders (Supabase Edge Functions + Resend)
 - Program completion flow (what happens when a user finishes their program)
 
+### Exercise Media (Phase 2+)
+**Concept:** Each exercise card shows a simplified icon or graphic inline. Tapping a detail button opens a full exercise view with 3 photos showing the movement: start position → mid-transition → end position.
+
+**Implementation thoughts:**
+- **Phase 1 of this feature:** Simplified SVG icons or illustration per muscle group (not per exercise) — low effort, adds visual context
+- **Phase 2 of this feature:** Per-exercise photo set (3 images) stored in Supabase Storage, linked from the `exercise` object in the program structure JSON
+- Exercise detail view: full-screen modal or dedicated page with photos, technique note, common mistakes, and swap options
+- Images could be sourced from a licensed library or custom-shot — needs a decision before building
+- JSON shape addition: `{ name, sets, reps, note, swap_category, media: { icon: "chest_press", photos: ["start.jpg", "mid.jpg", "end.jpg"] } }`
+
 ---
 
 ## 10. Build Order (Phase 1)
