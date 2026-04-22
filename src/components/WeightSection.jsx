@@ -95,6 +95,7 @@ export default function WeightSection({ logs, profile, userId, onLogAdded }) {
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ weight: '', bodyFat: '', date: '' })
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   const sorted = [...logs].sort((a, b) => a.logged_at.localeCompare(b.logged_at))
   const latest = sorted[sorted.length - 1]
@@ -112,13 +113,15 @@ export default function WeightSection({ logs, profile, userId, onLogAdded }) {
       bodyFat: latest?.body_fat ? String(latest.body_fat) : '',
       date: new Date().toISOString().slice(0, 10),
     })
+    setSaveError('')
     setShowModal(true)
   }
 
   async function handleSave() {
     if (!form.weight || !form.date) return
     setSaving(true)
-    const { data } = await supabase
+    setSaveError('')
+    const { data, error } = await supabase
       .from('weight_logs')
       .insert({
         user_id: userId,
@@ -128,8 +131,12 @@ export default function WeightSection({ logs, profile, userId, onLogAdded }) {
       })
       .select()
       .single()
-    if (data) onLogAdded(data)
     setSaving(false)
+    if (error) {
+      setSaveError(error.message)
+      return // keep modal open so user can see the error
+    }
+    if (data) onLogAdded(data)
     setShowModal(false)
   }
 
@@ -230,6 +237,8 @@ export default function WeightSection({ logs, profile, userId, onLogAdded }) {
               />
               <p className="date-hint">Back-date to log a missed check-in.</p>
             </div>
+
+            {saveError && <p className="auth-error" style={{ margin: '0 0 4px' }}>{saveError}</p>}
 
             <button
               className="btn-primary"
