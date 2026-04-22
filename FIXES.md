@@ -93,6 +93,12 @@ where id = (select id from auth.users where email = 'kpentapalli@gmail.com');
 
 ---
 
+## F017 — Intake form RLS error for regular users
+**Problem:** Non-admin users getting "new row violates row-level security policy for table profiles" when submitting intake. The `upsert` operation always attempts an INSERT first (even when the row exists), which hit the INSERT policy check unexpectedly.  
+**Fix:** Changed intake form from `upsert` to `update`. The trigger reliably creates the profile row when a user is created via the Supabase dashboard, so an INSERT is never needed — `update` is sufficient and avoids the RLS conflict entirely.
+
+---
+
 ## F016 — Progress bar label clipped and invisible
 **Problem:** The "0 / 42 sets" label under the progress bar was invisible — it was nested inside the `.progress-bar-wrap` div which had `height: 6px` and `overflow: hidden`, clipping the text entirely. Only the thin bar track was visible, appearing as an artifact above the first exercise group.  
 **Fix:** Moved the `.progress-label` div outside of `.progress-bar-wrap` so it renders below the bar without being clipped.
