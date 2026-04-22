@@ -1,7 +1,7 @@
 # Project K — Phase 1 Build Spec
 
-**Last updated:** 2026-04-21  
-**Status:** Design complete, ready to build  
+**Last updated:** 2026-04-21 (Phase 1 shipped)
+**Status:** Live in production  
 **Repo:** github.com/kpentapalli/project-k  
 **Live:** kpentapalli.github.io/project-k (migrating to Vercel)
 
@@ -279,6 +279,20 @@ A private, invite-only fitness training OS. An admin (Kalyan) assigns structured
 | exercise_index | int | |
 | swap_name | text | chosen alternative name |
 
+### `feedback` _(added post-launch)_
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid (PK) | |
+| user_id | uuid (FK → profiles, nullable) | null if user deleted |
+| user_name | text | snapshot of name at submission time |
+| message | text | |
+| rating | int | 1–5 (😤😐🙂😄🔥), nullable |
+| created_at | timestamptz | |
+
+### RLS additions _(added post-launch)_
+- `profiles`: added INSERT policy (`id = auth.uid()`) — needed because users created via Supabase dashboard don't trigger the auto-profile trigger
+- `feedback`: insert for all authenticated users, select for admin only
+
 ---
 
 ## 6. Routes
@@ -286,12 +300,12 @@ A private, invite-only fitness training OS. An admin (Kalyan) assigns structured
 | Route | Access | Description |
 |-------|--------|-------------|
 | `/` | Public | Redirects to `/login` if unauthenticated, `/dashboard` if authenticated |
-| `/login` | Public | Email + password login form |
-| `/intake` | Authenticated (user, intake not done) | First-login intake form |
+| `/login` | Public | Email + password login form + forgot password link |
+| `/reset-password` | Public | Set new password after clicking email reset link |
+| `/intake` | Authenticated (intake not done, non-admin) | First-login intake form |
 | `/dashboard` | Authenticated | User dashboard |
 | `/program` | Authenticated | Active program view + workout logging |
-| `/admin` | Admin only | Admin dashboard |
-| `/admin/users/:id` | Admin only | Individual user detail + program assignment |
+| `/admin` | Admin only | User list + program assignment + feedback viewer |
 
 ---
 
@@ -310,6 +324,15 @@ New components to design:
 - Admin user list table
 - Program assignment UI (modal or inline)
 - "No program assigned" holding state on dashboard
+
+---
+
+## 7b. Post-Launch Additions (shipped same session)
+
+- **Feedback button** — floating 💬 button on Dashboard and Program pages. Modal with emoji rating (1–5) + free text. Stored in `feedback` table.
+- **Admin feedback tab** — Admin dashboard has Users / Feedback tabs. Feedback shown with name, date, rating, message.
+- **Forgot password flow** — "Forgot password?" link on login page. Supabase sends reset email. `/reset-password` page handles new password entry.
+- **Supabase URL config** — Site URL set to Vercel app URL to prevent auth emails linking to localhost.
 
 ---
 

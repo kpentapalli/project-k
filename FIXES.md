@@ -93,6 +93,12 @@ where id = (select id from auth.users where email = 'kpentapalli@gmail.com');
 
 ---
 
+## F016 — Progress bar label clipped and invisible
+**Problem:** The "0 / 42 sets" label under the progress bar was invisible — it was nested inside the `.progress-bar-wrap` div which had `height: 6px` and `overflow: hidden`, clipping the text entirely. Only the thin bar track was visible, appearing as an artifact above the first exercise group.  
+**Fix:** Moved the `.progress-label` div outside of `.progress-bar-wrap` so it renders below the bar without being clipped.
+
+---
+
 ## F015 — Auth emails linking to localhost instead of Vercel app
 **Problem:** Password reset and invite emails sent to users contained `localhost` links, making them unusable.  
 **Root cause:** Supabase defaults the Site URL to `http://localhost:5173` (Vite's dev server).  
