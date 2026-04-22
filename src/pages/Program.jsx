@@ -241,8 +241,8 @@ export default function Program() {
 
             <div className="progress-bar-wrap">
               <div className="progress-bar" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
-              <div className="progress-label">{done} / {total} sets</div>
             </div>
+            <div className="progress-label">{done} / {total} sets</div>
 
             {day.groups?.map((group, gi) => (
               <div className="ex-group" key={gi}>
