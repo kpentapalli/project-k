@@ -8,17 +8,21 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(undefined)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      if (session) fetchProfile(session.user.id)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // onAuthStateChange fires INITIAL_SESSION on subscribe — no need for getSession().
+    // Using both caused a race: INITIAL_SESSION would set profile=null (no session),
+    // then on SIGNED_IN the loading gate (profile===undefined) was already false,
+    // so ProtectedRoute rendered with stale null profile → wrongly redirected to /intake.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        // Reset profile to undefined so loading=true while we re-fetch.
+        // Without this, profile stays null from the prior INITIAL_SESSION(null) call
+        // and loading never gates the routing decision.
+        setProfile(undefined)
+      }
       setSession(session)
       if (session) fetchProfile(session.user.id)
       else setProfile(null)
     })
-
 
     return () => subscription.unsubscribe()
   }, [])

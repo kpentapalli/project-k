@@ -138,6 +138,14 @@ where user_id = (select id from auth.users where email = 'kpentapalli@gmail.com'
 
 ---
 
+## F019 — Intake form shown on every login after session lapse
+**Root cause:** `AuthContext` used both `getSession()` and `onAuthStateChange`. When the app loaded with no existing session, `onAuthStateChange` fired `INITIAL_SESSION` with null → `setProfile(null)`. When the user then logged in and `SIGNED_IN` fired, `loading = session!==null && profile===undefined` evaluated to `false` because profile was already `null` (not `undefined`). ProtectedRoute rendered immediately with stale `profile=null` → `isAdmin=false, intakeCompleted=false` → redirected to `/intake`.  
+**Fix:**
+- Removed the redundant `getSession()` call — `onAuthStateChange` already emits `INITIAL_SESSION` on subscribe, covering the same case
+- Added `setProfile(undefined)` at the top of the `SIGNED_IN` handler to reset the profile state before fetching, so the `profile===undefined` loading gate re-engages and ProtectedRoute waits for the real profile data
+
+---
+
 ## F018 — Workout date always stamped as now(), breaking heatmap and streak
 **Problem:** `finishWorkout()` always wrote `completed_at: new Date().toISOString()`, so every log was stamped at the moment of logging — not when the workout actually happened. This made the muscle recovery heatmap inaccurate, broke streak calculations for anyone who logs after the fact, and made historical back-filling impossible.  
 **Fix:**
