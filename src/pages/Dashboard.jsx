@@ -149,29 +149,26 @@ export default function Dashboard() {
             {/* ── Muscle Status ── */}
             <section className="section">
               <div className="section-title">Muscle Status</div>
-              <div className="ms-list">
+              <div className="muscle-grid">
                 {muscleStatus.map(({ muscle, days, total, state }) => (
-                  <div className="ms-row" key={muscle}>
-                    <div className="ms-name">{muscle}</div>
-                    <div className="ms-bar-wrap">
+                  <div className="muscle-card" key={muscle}>
+                    <div className="muscle-name">{muscle}</div>
+                    <div className="muscle-status" style={{ color: state.color }}>{state.label}</div>
+                    <div className="muscle-bar-wrap">
                       <div
-                        className="ms-bar-fill"
+                        className="muscle-bar-fill"
                         style={{
-                          width: `${total === 0 ? 0 : Math.max((total / maxMuscleCount) * 100, 4)}%`,
+                          width: `${total === 0 ? 0 : Math.max((total / maxMuscleCount) * 100, 6)}%`,
                           background: state.color,
                         }}
                       />
                     </div>
-                    <div className="ms-right">
-                      <span className="ms-state" style={{ color: state.color }}>{state.label}</span>
-                      <span className="ms-days">
-                        {days >= 999 ? '' : days === 0 ? 'today' : `${days}d ago`}
-                      </span>
+                    <div className="muscle-days">
+                      {days >= 999 ? '—' : days === 0 ? 'today' : `${days}d ago`}
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="ms-hint">Bar length = total sessions · color = recovery state</div>
             </section>
 
             {/* ── Recent Workouts ── */}
