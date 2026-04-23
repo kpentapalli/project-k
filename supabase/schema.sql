@@ -254,6 +254,69 @@ create policy "admin updates request status"
   using (public.is_admin());
 
 
+-- ── Auto-assign program on intake completion ──────────────────────────────
+-- Maps experience + goal + days_per_week → best-fit program when intake_completed
+-- flips true. Runs SECURITY DEFINER so it can insert into program_assignments
+-- without requiring admin role. assigned_by = NULL marks it as a system assignment.
+
+create or replace function public.auto_assign_program_on_intake()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_program_id   uuid;
+  v_program_name text;
+begin
+  -- Only fire when intake_completed transitions false → true
+  if not (new.intake_completed = true and (old.intake_completed is distinct from true)) then
+    return new;
+  end if;
+
+  -- Skip if already assigned (admin may have pre-assigned)
+  if exists (select 1 from public.program_assignments where user_id = new.id) then
+    return new;
+  end if;
+
+  -- Map experience + goal + days_per_week to program name
+  if new.experience = 'beginner' then
+    v_program_name := 'Beginner Foundation';
+  elsif new.goal = 'athletic_performance' then
+    v_program_name := case when new.days_per_week >= 5 then 'Athletic Performance' else 'Beginner Foundation' end;
+  elsif new.goal = 'cut' then
+    v_program_name := case when new.days_per_week >= 6 then 'The 6-Week Cut' else 'Beginner Foundation' end;
+  elsif new.goal = 'bulk' then
+    v_program_name := case when new.days_per_week >= 5 then 'The 8-Week Bulk' else 'Beginner Foundation' end;
+  else
+    v_program_name := 'Beginner Foundation';
+  end if;
+
+  select id into v_program_id
+  from public.programs
+  where name = v_program_name and is_active = true
+  limit 1;
+
+  -- Hard fallback: any active program
+  if v_program_id is null then
+    select id into v_program_id from public.programs where is_active = true limit 1;
+  end if;
+
+  if v_program_id is not null then
+    insert into public.program_assignments (user_id, program_id, start_date, assigned_by)
+    values (new.id, v_program_id, current_date, null);
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists after_intake_completed on public.profiles;
+create trigger after_intake_completed
+  after update on public.profiles
+  for each row
+  execute function public.auto_assign_program_on_intake();
+
 -- ── After running this: ──────────────────
 -- 1. Sign up via the app
 -- 2. Promote yourself to admin:

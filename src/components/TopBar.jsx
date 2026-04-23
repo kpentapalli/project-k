@@ -26,6 +26,12 @@ export default function TopBar({ active }) {
         >
           Program
         </button>
+        <button
+          className={`nav-btn ${active === 'about' ? 'active' : ''}`}
+          onClick={() => navigate('/about')}
+        >
+          About
+        </button>
         {isAdmin && (
           <button
             className={`nav-btn ${active === 'admin' ? 'active' : ''}`}

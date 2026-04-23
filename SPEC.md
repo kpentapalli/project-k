@@ -1,9 +1,9 @@
 # Project K — Phase 1 Build Spec
 
-**Last updated:** 2026-04-21 (Phase 1 shipped)
+**Last updated:** 2026-04-23  
 **Status:** Live in production  
 **Repo:** github.com/kpentapalli/project-k  
-**Live:** kpentapalli.github.io/project-k (migrating to Vercel)
+**Live:** https://project-k-ten-mu.vercel.app
 
 ---
 
@@ -289,9 +289,34 @@ A private, invite-only fitness training OS. An admin (Kalyan) assigns structured
 | rating | int | 1–5 (😤😐🙂😄🔥), nullable |
 | created_at | timestamptz | |
 
+### `access_requests` _(added Phase 2)_
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid (PK) | |
+| name | text | |
+| email | text | |
+| message | text | nullable |
+| status | text | pending / approved / rejected |
+| created_at | timestamptz | |
+
+### `weight_logs` _(added Phase 2)_
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid (PK) | |
+| user_id | uuid (FK → profiles) | |
+| weight | numeric | lbs |
+| body_fat | numeric | %, nullable |
+| logged_at | date | back-datable |
+| created_at | timestamptz | |
+
 ### RLS additions _(added post-launch)_
 - `profiles`: added INSERT policy (`id = auth.uid()`) — needed because users created via Supabase dashboard don't trigger the auto-profile trigger
 - `feedback`: insert for all authenticated users, select for admin only
+- `access_requests`: anon + authenticated INSERT, admin SELECT/UPDATE
+- `weight_logs`: users manage own rows, admin reads all
+
+### DB trigger _(added Phase 2)_
+- `auto_assign_program_on_intake()` — SECURITY DEFINER function, fires `AFTER UPDATE ON profiles` when `intake_completed` flips true. Inserts into `program_assignments` with mapped program. See `supabase/schema.sql` for full SQL.
 
 ---
 
@@ -383,20 +408,64 @@ These are explicitly deferred to Phase 2+:
 
 ---
 
-## 10. Phase 2 — Remaining Roadmap (priority order)
+### P3 — Weight tracking ✅
+**What shipped:**
+- `weight_logs` table: `weight` (lbs), `body_fat` (%, nullable), `logged_at` (date, back-datable)
+- `WeightSection` component on dashboard: log weight modal + two `MiniLineChart` SVGs (weight in green, BF% in orange — BF% chart only renders with ≥2 entries)
+- Stats row: current weight / change since first entry / current BF% / target weight
+- `MiniLineChart` is a reusable SVG component shared between both charts
 
-| Priority | Feature | Notes |
-|----------|---------|-------|
-| 🔴 Next | Muscle recovery graph | Date data now accurate — good time to build |
-| 🔴 Next | Progress charts | Weight over time, volume over time, adherence |
-| 🟡 Soon | Program completion flow | What happens when user finishes week 6/8 |
-| 🟡 Soon | Admin program builder | Create/edit programs without SQL |
-| 🟢 Quick win | Exercise YouTube search | Link icon on exercise card → YouTube search in new tab |
-| 🟢 Polish | Custom domain | projectk.fit or similar |
-| 🟢 Polish | Email reminders | Edge Functions + Resend — "haven't logged in 3 days" |
-| ⏳ Later | Exercise media | SVG icons → per-exercise photos in Supabase Storage |
-| ⏳ Phase 3 | Diet / nutrition tracking | Macros, meal logging — separate product surface |
-| ⏳ Phase 3 | Mobile app | React Native, after web is solid |
+**Files changed:** `src/pages/Dashboard.jsx`, `src/components/WeightSection.jsx`, `src/index.css`, `supabase/schema.sql`
+
+---
+
+### P4 — Muscle recovery bars ✅
+**What shipped:**
+- Each muscle group card on the dashboard now shows a colored recovery bar
+- Recovery % = time elapsed since last training session / 3-day recovery window × 100
+- Color bands: red <45%, orange 45–80%, green ≥80%
+
+**Files changed:** `src/pages/Dashboard.jsx`, `src/index.css`
+
+---
+
+### P5 — Workout frequency chart ✅
+**What shipped:**
+- 8-week CSS bar chart on dashboard, drawn from `workout_logs`
+- Each bar height proportional to workouts logged that week
+- Zero-workout weeks render as a thin grey baseline bar
+
+**Files changed:** `src/pages/Dashboard.jsx`, `src/index.css`
+
+---
+
+### P6 — Auto-assign program on intake ✅
+**Problem:** Users completed intake but had to wait for admin to manually assign a program before they could start training.  
+**What shipped:**
+- `auto_assign_program_on_intake()` — `SECURITY DEFINER` Postgres function that fires via `after_intake_completed` trigger on `profiles`
+- Fires only when `intake_completed` flips `false → true` and no assignment already exists
+- Mapping logic: `experience = beginner` → Beginner Foundation; `goal = athletic_performance + ≥5 days` → Athletic Performance; `goal = cut + ≥6 days` → The 6-Week Cut; `goal = bulk + ≥5 days` → The 8-Week Bulk; all other combos → Beginner Foundation
+- `assigned_by = NULL` marks it as a system assignment (admin override still works normally)
+- Hard fallback: if mapped program not found, assigns any active program
+
+**Files changed:** `supabase/schema.sql`, `src/pages/Dashboard.jsx`  
+**Action required:** Run the trigger SQL block from `supabase/schema.sql` in Supabase SQL Editor to activate.
+
+---
+
+## 10. Phase 2 — Remaining Roadmap (priority order, as of 2026-04-23)
+
+| # | Feature | Size | Notes |
+|---|---------|------|-------|
+| 1 | Seed 2–3 more programs | ~1 hr | Broaden library so auto-assign mapping covers more intake combos (e.g. intermediate strength, hypertrophy). Pure `seed.js` work. |
+| 2 | Program switching + completion flow | ~half day | Unified picker: "program done" and "switch program" land same place. Archive old `workout_logs`, reset to week 1 of new program. |
+| 3 | Admin program builder | 1–2 days | Create/edit programs without SQL. Build after living with auto-assign + switching — those surface what fields the builder actually needs. |
+| 4 | Exercise YouTube search link | ~30 min | Icon on exercise card → YouTube search in new tab. Quick win. |
+| 5 | Custom domain | — | projectk.fit or similar |
+| 6 | Email reminders | — | "Haven't logged in 3 days" — Supabase Edge Functions + Resend |
+| 7 | Exercise media | — | SVG icons → per-exercise photos in Supabase Storage |
+| 8 | Diet / nutrition tracking | Phase 3 | Macros, meal logging — separate product surface, deep rabbit hole |
+| 9 | Mobile app | Phase 3 | React Native, after web is solid |
 
 ### Exercise Media — Design Notes (when ready)
 - **Quick version:** SVG icon per muscle group inline on exercise cards (low effort)

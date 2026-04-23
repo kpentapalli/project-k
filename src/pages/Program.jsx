@@ -19,6 +19,8 @@ export default function Program() {
   const [showDateModal, setShowDateModal] = useState(false)
   const [workoutDate, setWorkoutDate] = useState('')
   const [loading, setLoading] = useState(true)
+  const [showIntro, setShowIntro] = useState(false)
+  const [showAbout, setShowAbout] = useState(false)
 
   useEffect(() => {
     load()
@@ -46,6 +48,9 @@ export default function Program() {
     setLogs(logsRes.data || [])
     setSetLogs(setLogsRes.data || [])
     setSwaps(swapsRes.data || [])
+
+    const introKey = `pk_intro_${assignData.program_id}`
+    if (!localStorage.getItem(introKey)) setShowIntro(true)
 
     const startDate = new Date(assignData.start_date)
     const weekIdx = Math.min(
@@ -184,6 +189,11 @@ export default function Program() {
     setTimers(prev => ({ ...prev, [key]: 60 }))
   }
 
+  function dismissIntro() {
+    localStorage.setItem(`pk_intro_${assignment.program_id}`, '1')
+    setShowIntro(false)
+  }
+
   if (loading) return <div className="loading-screen">Loading...</div>
   if (!assignment) return (
     <div className="page">
@@ -208,10 +218,33 @@ export default function Program() {
     <div className="page">
       <TopBar active="program" />
       <FeedbackButton />
+
+      {showIntro && (
+        <div className="modal-bg intro-bg">
+          <div className="intro-card">
+            <div className="hero-label">{program.duration_weeks} WEEKS · {program.days_per_week} DAYS/WK · {program.difficulty?.toUpperCase()}</div>
+            <h2 className="intro-title">{program.name.toUpperCase()}</h2>
+            <p className="intro-body">{program.description}</p>
+            <div className="intro-tip">Your sets, reps, and exercise notes are all inside each workout day. Tap any exercise card to expand it.</div>
+            <button className="btn-primary intro-cta" onClick={dismissIntro}>Let's Go</button>
+          </div>
+        </div>
+      )}
+
       <div className="page-content">
         <div className="hero">
           <div className="hero-label">PROGRAM 01 · {program.duration_weeks} WEEKS · {program.days_per_week} DAYS/WK</div>
           <h1 className="hero-title">{program.name.toUpperCase()}</h1>
+          {program.description && (
+            <div className="about-toggle-wrap">
+              <button className="about-toggle" onClick={() => setShowAbout(v => !v)}>
+                About this program {showAbout ? '▲' : '▼'}
+              </button>
+              {showAbout && (
+                <div className="about-inline">{program.description}</div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="week-tabs">
@@ -274,6 +307,14 @@ export default function Program() {
                           <div className="ex-meta"><b>{ex.sets} sets</b> × {ex.reps} reps</div>
                         </div>
                         <div className="ex-actions">
+                          <a
+                            className="swap-btn yt-btn"
+                            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(exName + ' exercise form tutorial')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            title="Search on YouTube"
+                          >▶</a>
                           <button className="swap-btn" onClick={e => { e.stopPropagation(); setSwapTarget({ wk: currentWeek, day: currentDay, gi, ei }) }}>⇄</button>
                         </div>
                       </div>

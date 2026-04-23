@@ -70,6 +70,18 @@ function buildWeeks(logs) {
   })
 }
 
+// Muscle history: all-time count + recent 4-week count per muscle
+function buildMuscleHistory(logs, muscles) {
+  const cutoff = Date.now() - 28 * 86400000
+  return muscles.map(muscle => {
+    const total = logs.filter(l => (l.muscle_groups || []).includes(muscle)).length
+    const recent = logs.filter(l =>
+      (l.muscle_groups || []).includes(muscle) && new Date(l.completed_at).getTime() >= cutoff
+    ).length
+    return { muscle, total, recent }
+  })
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -129,6 +141,9 @@ export default function Dashboard() {
   const weeks = buildWeeks(logs)
   const maxWeekCount = Math.max(...weeks.map(w => w.count), 1)
 
+  const muscleHistory = buildMuscleHistory(logs, MUSCLES)
+  const maxMuscleCount = Math.max(...muscleHistory.map(m => m.total), 1)
+
   if (loading) return <div className="loading-screen">Loading...</div>
 
   return (
@@ -147,9 +162,9 @@ export default function Dashboard() {
 
         {!assignment ? (
           <div className="holding-state">
-            <div className="holding-icon">⏳</div>
-            <h2>Your program is being set up</h2>
-            <p>Check back soon — your program will appear here once it's assigned.</p>
+            <div className="holding-icon">🏋️</div>
+            <h2>No program assigned yet</h2>
+            <p>Your trainer will assign a program shortly. Check back soon.</p>
           </div>
         ) : (
           <>
@@ -226,6 +241,34 @@ export default function Dashboard() {
                 ))}
               </div>
             </section>
+
+            {/* ── Muscle Training History ── */}
+            {logs.length > 0 && (
+              <section className="section">
+                <div className="section-title">Muscle Training History</div>
+                <div className="mh-list">
+                  {muscleHistory.map(({ muscle, total, recent }) => {
+                    const neglected = total > 0 && recent < 2
+                    const never = total === 0
+                    return (
+                      <div className="mh-row" key={muscle}>
+                        <div className="mh-name">{muscle}</div>
+                        <div className="mh-bar-wrap">
+                          <div
+                            className="mh-bar-fill"
+                            style={{ width: `${(total / maxMuscleCount) * 100}%` }}
+                          />
+                        </div>
+                        <div className="mh-count">{total === 0 ? '—' : total}</div>
+                        {neglected && <div className="mh-badge neglected">underworked</div>}
+                        {never && logs.length >= 3 && <div className="mh-badge never">never trained</div>}
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="mh-hint">Sessions per muscle group · all time · badges show &lt;2 sessions in last 4 weeks</div>
+              </section>
+            )}
 
             {/* ── Recent Workouts ── */}
             <section className="section">
