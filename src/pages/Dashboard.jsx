@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import TopBar from '../components/TopBar'
 import FeedbackButton from '../components/FeedbackButton'
 import WeightSection from '../components/WeightSection'
+import { getReadinessState, READINESS_PRIORITY } from '../lib/readiness'
 
 const MUSCLES = ['Chest', 'Shoulders', 'Triceps', 'Back', 'Traps', 'Biceps', 'Legs', 'Calves', 'Abs']
 
@@ -12,27 +13,6 @@ const MUSCLES = ['Chest', 'Shoulders', 'Triceps', 'Back', 'Traps', 'Biceps', 'Le
 function daysSince(dateStr) {
   if (!dateStr) return 999
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
-}
-
-function heatLabel(days) {
-  if (days === 999) return 'Never'
-  if (days === 0)   return 'Rest!'
-  if (days === 1)   return 'Rest!'
-  if (days === 2)   return 'Sore'
-  if (days <= 4)    return 'Ready'
-  return 'Fresh'
-}
-
-// Recovery % — assumes ~3 days to full recovery
-function recoveryPct(days) {
-  if (days === 999) return 100
-  return Math.min(100, Math.round((days / 3) * 100))
-}
-
-function recoveryColor(pct) {
-  if (pct >= 80) return 'var(--acc)'
-  if (pct >= 45) return 'var(--warn)'
-  return 'var(--danger)'
 }
 
 function calcStreak(logs) {
@@ -51,37 +31,6 @@ function calcStreak(logs) {
   return streak
 }
 
-// Build 8-week frequency buckets for the bar chart
-function buildWeeks(logs) {
-  const now = Date.now()
-  return Array.from({ length: 8 }, (_, wi) => {
-    const i = 7 - wi                               // i=7 = oldest, i=0 = this week
-    const end = now - i * 7 * 86400000
-    const start = end - 7 * 86400000
-    const count = logs.filter(l => {
-      const t = new Date(l.completed_at).getTime()
-      return t >= start && t < end
-    }).length
-    const d = new Date(start)
-    return {
-      label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      count,
-    }
-  })
-}
-
-// Muscle history: all-time count + recent 4-week count per muscle
-function buildMuscleHistory(logs, muscles) {
-  const cutoff = Date.now() - 28 * 86400000
-  return muscles.map(muscle => {
-    const total = logs.filter(l => (l.muscle_groups || []).includes(muscle)).length
-    const recent = logs.filter(l =>
-      (l.muscle_groups || []).includes(muscle) && new Date(l.completed_at).getTime() >= cutoff
-    ).length
-    return { muscle, total, recent }
-  })
-}
-
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -90,6 +39,7 @@ export default function Dashboard() {
   const [weightLogs, setWeightLogs] = useState([])
   const [assignment, setAssignment] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showAllWorkouts, setShowAllWorkouts] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -138,11 +88,15 @@ export default function Dashboard() {
     }
   }
 
-  const weeks = buildWeeks(logs)
-  const maxWeekCount = Math.max(...weeks.map(w => w.count), 1)
+  // Combined muscle status: readiness state + all-time session count, sorted by priority
+  const muscleStatus = MUSCLES.map(muscle => {
+    const days  = daysSince(muscleLastTrained[muscle])
+    const state = getReadinessState(days)
+    const total = logs.filter(l => (l.muscle_groups || []).includes(muscle)).length
+    return { muscle, days, total, state }
+  }).sort((a, b) => (READINESS_PRIORITY[a.state.key] || 9) - (READINESS_PRIORITY[b.state.key] || 9))
 
-  const muscleHistory = buildMuscleHistory(logs, MUSCLES)
-  const maxMuscleCount = Math.max(...muscleHistory.map(m => m.total), 1)
+  const maxMuscleCount = Math.max(...muscleStatus.map(m => m.total), 1)
 
   if (loading) return <div className="loading-screen">Loading...</div>
 
@@ -184,7 +138,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* ── Weight progress ── */}
+            {/* ── Weight & Body Composition ── */}
             <WeightSection
               logs={weightLogs}
               profile={profile}
@@ -192,83 +146,33 @@ export default function Dashboard() {
               onLogAdded={entry => setWeightLogs(prev => [...prev, entry])}
             />
 
-            {/* ── Muscle Recovery ── */}
+            {/* ── Muscle Status ── */}
             <section className="section">
-              <div className="section-title">Muscle Recovery</div>
-              <div className="muscle-grid">
-                {MUSCLES.map(muscle => {
-                  const days = daysSince(muscleLastTrained[muscle])
-                  const pct  = recoveryPct(days)
-                  const col  = recoveryColor(pct)
-                  return (
-                    <div className="muscle-card" key={muscle}>
-                      <div className="muscle-name">{muscle}</div>
-                      <div className="muscle-status" style={{ color: col }}>
-                        {heatLabel(days)}
-                      </div>
-                      <div className="muscle-bar-wrap">
-                        <div
-                          className="muscle-bar-fill"
-                          style={{ width: `${pct}%`, background: col }}
-                        />
-                      </div>
-                      <div className="muscle-days">
-                        {days === 999 ? '—' : days === 0 ? 'today' : `${days}d ago`}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </section>
-
-            {/* ── Workout Frequency ── */}
-            <section className="section">
-              <div className="section-title">Workout Frequency</div>
-              <div className="freq-chart">
-                {weeks.map((w, i) => (
-                  <div key={i} className="freq-col">
-                    <div className="freq-count-label">
-                      {w.count > 0 ? w.count : ''}
-                    </div>
-                    <div className="freq-bar-wrap">
+              <div className="section-title">Muscle Status</div>
+              <div className="ms-list">
+                {muscleStatus.map(({ muscle, days, total, state }) => (
+                  <div className="ms-row" key={muscle}>
+                    <div className="ms-name">{muscle}</div>
+                    <div className="ms-bar-wrap">
                       <div
-                        className={`freq-bar ${w.count === 0 ? 'freq-bar-zero' : ''}`}
-                        style={{ height: `${w.count === 0 ? 4 : Math.max((w.count / maxWeekCount) * 100, 12)}%` }}
+                        className="ms-bar-fill"
+                        style={{
+                          width: `${total === 0 ? 0 : Math.max((total / maxMuscleCount) * 100, 4)}%`,
+                          background: state.color,
+                        }}
                       />
                     </div>
-                    <div className="freq-label">{w.label}</div>
+                    <div className="ms-right">
+                      <span className="ms-state" style={{ color: state.color }}>{state.label}</span>
+                      <span className="ms-days">
+                        {days >= 999 ? '' : days === 0 ? 'today' : `${days}d ago`}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
+              <div className="ms-hint">Bar length = total sessions · color = recovery state</div>
             </section>
-
-            {/* ── Muscle Training History ── */}
-            {logs.length > 0 && (
-              <section className="section">
-                <div className="section-title">Muscle Training History</div>
-                <div className="mh-list">
-                  {muscleHistory.map(({ muscle, total, recent }) => {
-                    const neglected = total > 0 && recent < 2
-                    const never = total === 0
-                    return (
-                      <div className="mh-row" key={muscle}>
-                        <div className="mh-name">{muscle}</div>
-                        <div className="mh-bar-wrap">
-                          <div
-                            className="mh-bar-fill"
-                            style={{ width: `${(total / maxMuscleCount) * 100}%` }}
-                          />
-                        </div>
-                        <div className="mh-count">{total === 0 ? '—' : total}</div>
-                        {neglected && <div className="mh-badge neglected">underworked</div>}
-                        {never && logs.length >= 3 && <div className="mh-badge never">never trained</div>}
-                      </div>
-                    )
-                  })}
-                </div>
-                <div className="mh-hint">Sessions per muscle group · all time · badges show &lt;2 sessions in last 4 weeks</div>
-              </section>
-            )}
 
             {/* ── Recent Workouts ── */}
             <section className="section">
@@ -276,21 +180,28 @@ export default function Dashboard() {
               {logs.length === 0 ? (
                 <p className="empty-state">No workouts logged yet. Head to your program to get started.</p>
               ) : (
-                <div className="log-list">
-                  {logs.slice(0, 8).map(log => (
-                    <div className="log-item" key={log.id}>
-                      <div className="log-date">
-                        {new Date(log.completed_at).toLocaleDateString('en-US', {
-                          weekday: 'short', month: 'short', day: 'numeric',
-                        })}
+                <>
+                  <div className="log-list">
+                    {(showAllWorkouts ? logs.slice(0, 8) : logs.slice(0, 1)).map(log => (
+                      <div className="log-item" key={log.id}>
+                        <div className="log-date">
+                          {new Date(log.completed_at).toLocaleDateString('en-US', {
+                            weekday: 'short', month: 'short', day: 'numeric',
+                          })}
+                        </div>
+                        <div className="log-title">
+                          {log.day_title || `Week ${log.week_index + 1} · Day ${log.day_index + 1}`}
+                        </div>
+                        <div className="log-muscles">{(log.muscle_groups || []).join(' · ')}</div>
                       </div>
-                      <div className="log-title">
-                        {log.day_title || `Week ${log.week_index + 1} · Day ${log.day_index + 1}`}
-                      </div>
-                      <div className="log-muscles">{(log.muscle_groups || []).join(' · ')}</div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                  {logs.length > 1 && (
+                    <button className="show-more-btn" onClick={() => setShowAllWorkouts(v => !v)}>
+                      {showAllWorkouts ? 'Show less' : `Show ${Math.min(logs.length - 1, 7)} more`}
+                    </button>
+                  )}
+                </>
               )}
             </section>
           </>
