@@ -149,6 +149,12 @@ where user_id = (select id from auth.users where email = 'kpentapalli@gmail.com'
 
 ---
 
+## F020 — Dashboard revamp replaced muscle grid with list layout
+**Problem:** During the dashboard revamp, the Muscle Status section was rebuilt as a vertical list (`ms-list`) instead of preserving the existing 3×3 card grid that users were familiar with.  
+**Fix:** Reverted the JSX back to `muscle-grid` + `muscle-card` structure, keeping the existing CSS grid. Updated card internals to use the new 7-state readiness color and label instead of the old binary recovery model.
+
+---
+
 ## F019 — Intake form shown on every login after session lapse
 **Root cause:** `AuthContext` used both `getSession()` and `onAuthStateChange`. When the app loaded with no existing session, `onAuthStateChange` fired `INITIAL_SESSION` with null → `setProfile(null)`. When the user then logged in and `SIGNED_IN` fired, `loading = session!==null && profile===undefined` evaluated to `false` because profile was already `null` (not `undefined`). ProtectedRoute rendered immediately with stale `profile=null` → `isAdmin=false, intakeCompleted=false` → redirected to `/intake`.  
 **Fix:**

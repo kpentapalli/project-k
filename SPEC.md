@@ -408,34 +408,23 @@ These are explicitly deferred to Phase 2+:
 
 ---
 
-### P3 — Weight tracking ✅
+### P3 — Weight tracking ✅ (revised in P8)
 **What shipped:**
 - `weight_logs` table: `weight` (lbs), `body_fat` (%, nullable), `logged_at` (date, back-datable)
-- `WeightSection` component on dashboard: log weight modal + two `MiniLineChart` SVGs (weight in green, BF% in orange — BF% chart only renders with ≥2 entries)
-- Stats row: current weight / change since first entry / current BF% / target weight
-- `MiniLineChart` is a reusable SVG component shared between both charts
+- `WeightSection` component: log weight modal + stats row (current / change / BF% / target)
+- Originally two separate `MiniLineChart` SVGs; replaced by `CombinedBodyChart` in P8
 
 **Files changed:** `src/pages/Dashboard.jsx`, `src/components/WeightSection.jsx`, `src/index.css`, `supabase/schema.sql`
 
 ---
 
-### P4 — Muscle recovery bars ✅
-**What shipped:**
-- Each muscle group card on the dashboard now shows a colored recovery bar
-- Recovery % = time elapsed since last training session / 3-day recovery window × 100
-- Color bands: red <45%, orange 45–80%, green ≥80%
-
-**Files changed:** `src/pages/Dashboard.jsx`, `src/index.css`
+### P4 — Muscle recovery bars ✅ (revised in P8)
+**What shipped:** 3-color recovery bars on muscle grid cards (red/orange/green based on 3-day recovery window). Replaced by 7-state readiness model in P8.
 
 ---
 
-### P5 — Workout frequency chart ✅
-**What shipped:**
-- 8-week CSS bar chart on dashboard, drawn from `workout_logs`
-- Each bar height proportional to workouts logged that week
-- Zero-workout weeks render as a thin grey baseline bar
-
-**Files changed:** `src/pages/Dashboard.jsx`, `src/index.css`
+### P5 — Workout frequency chart ✅ (removed in P8)
+**What shipped:** 8-week CSS bar chart. Removed in P8 dashboard revamp — not adding enough value alongside the muscle status data.
 
 ---
 
@@ -453,19 +442,53 @@ These are explicitly deferred to Phase 2+:
 
 ---
 
+### P7 — Exercise YouTube search + About page + first-start intros ✅
+**What shipped:**
+- **YouTube link** — `▶` button on every exercise card opens `youtube.com/results?search_query={exercise} exercise form tutorial` in a new tab. Red hover to distinguish from swap button.
+- **`/about` page** — overall training philosophy (3 pillars: progressive overload, compound first, recovery is training) + per-program cards with hand-written taglines. Accessible via "About" in TopBar.
+- **First-start program intro** — full-screen overlay on first visit to `/program` per program. Tracked in `localStorage` (`pk_intro_{programId}`). Dismisses permanently, accessible after via collapsible "About this program ▼" toggle in program header.
+
+**New files:** `src/pages/About.jsx`  
+**Files changed:** `src/App.jsx`, `src/components/TopBar.jsx`, `src/pages/Program.jsx`, `src/index.css`
+
+---
+
+### P8 — Dashboard revamp ✅
+**What shipped:**
+- **Combined Weight & BF% chart** — single dual-axis SVG (`CombinedBodyChart`). Weight (green) on left Y-axis, BF% (orange) on right Y-axis. Shared date X-axis across both series. Sparse BF% points render as dots without breaking the weight line. Goal weight dashed line preserved.
+- **Muscle Status 9-grid** — replaced Muscle Recovery + Muscle Training History + Workout Frequency with one section. Bar length = all-time sessions per muscle. Bar and label color = 7-state readiness (see `src/lib/readiness.js`). Cards sorted by training priority (Ready first, Detraining/Neglected surfaced). Grid layout preserved.
+- **`src/lib/readiness.js`** — `READINESS_STATES` config array + `getReadinessState(days)` exported for future legend/tooltip. 7 states: untrained (red) → sore (red) → partial (orange) → ready (green) → stale (orange) → neglected (light blue #93c5fd) → detraining (blue #3b82f6). Piecewise time-decay: ramp 0→3d, plateau 3→7d, decay 7→17d.
+- **Recent Workouts** — collapsed to 1 entry by default; "Show N more" expands to 8.
+- **Removed:** Workout Frequency 8-week bar chart.
+
+**Files changed:** `src/pages/Dashboard.jsx`, `src/components/WeightSection.jsx`, `src/index.css`  
+**New files:** `src/lib/readiness.js`
+
+---
+
 ## 10. Phase 2 — Remaining Roadmap (priority order, as of 2026-04-23)
 
 | # | Feature | Size | Notes |
 |---|---------|------|-------|
-| 1 | Seed 2–3 more programs | ~1 hr | Broaden library so auto-assign mapping covers more intake combos (e.g. intermediate strength, hypertrophy). Pure `seed.js` work. |
-| 2 | Program switching + completion flow | ~half day | Unified picker: "program done" and "switch program" land same place. Archive old `workout_logs`, reset to week 1 of new program. |
-| 3 | Admin program builder | 1–2 days | Create/edit programs without SQL. Build after living with auto-assign + switching — those surface what fields the builder actually needs. |
-| 4 | Exercise YouTube search link | ~30 min | Icon on exercise card → YouTube search in new tab. Quick win. |
-| 5 | Custom domain | — | projectk.fit or similar |
-| 6 | Email reminders | — | "Haven't logged in 3 days" — Supabase Edge Functions + Resend |
-| 7 | Exercise media | — | SVG icons → per-exercise photos in Supabase Storage |
-| 8 | Diet / nutrition tracking | Phase 3 | Macros, meal logging — separate product surface, deep rabbit hole |
-| 9 | Mobile app | Phase 3 | React Native, after web is solid |
+| 1 | Seed 2–3 more programs | ~1 hr | Review existing 4 first. Broadens auto-assign coverage. |
+| 2 | Program switching + completion flow | ~half day | Unified picker: "program done" and "I want to switch" land same place. Don't archive logs — scope views to current program. |
+| 3 | Program retrospective screen | ~2 hr | On program completion: X days trained, muscles hit, weight change. |
+| 4 | Effort-mode logging (easy/medium/hard per set) | 1 day | Needs design pass first. RPE-lite, lower friction than weight logging. |
+| 5 | Admin program builder | 1–2 days | After #1–4 surface what fields it needs. |
+| 6 | Optional weight-per-set + PRs | 1 day | Advanced users only, fully optional input. |
+| 7 | Custom domain | — | projectk.fit or similar |
+| 8 | Email reminders | — | "Haven't logged in 3 days" — Supabase Edge Functions + Resend |
+| 9 | Exercise media | — | Per-exercise photos in Supabase Storage |
+| 10 | Diet / nutrition tracking | Phase 3 | Separate product surface |
+| 11 | Mobile app | Phase 3 | React Native, after web is solid |
+
+### Backlog (parked — not scheduled)
+| Feature | Why parked |
+|---------|-----------|
+| "Ready to train now" callout | Needs program customization / dynamic program selection |
+| Weight goal progress bar in stats row | 10-min add — queue when doing next weight work |
+| Muscle grouping (Push/Pull/Legs) | Too advanced for target users |
+| Program-aware muscle priority | Waits for program flexibility feature |
 
 ### Exercise Media — Design Notes (when ready)
 - **Quick version:** SVG icon per muscle group inline on exercise cards (low effort)
