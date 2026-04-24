@@ -317,8 +317,123 @@ create trigger after_intake_completed
   for each row
   execute function public.auto_assign_program_on_intake();
 
+
+-- ── Program switching: status column + partial unique index ───────────────────
+-- Run this block in Supabase SQL Editor to enable multi-program history.
+-- Safe to re-run.
+
+-- Add status column (active / completed) if not already present
+do $$ begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name   = 'program_assignments'
+      and column_name  = 'status'
+  ) then
+    alter table public.program_assignments
+      add column status text not null default 'active'
+        check (status in ('active', 'completed'));
+  end if;
+end $$;
+
+-- Drop the old unique(user_id) constraint and replace with a partial index
+-- so users can have many historical (completed) assignments but only one active.
+alter table public.program_assignments
+  drop constraint if exists program_assignments_user_id_unique;
+
+drop index if exists program_assignments_one_active_per_user;
+create unique index program_assignments_one_active_per_user
+  on public.program_assignments (user_id)
+  where status = 'active';
+
+-- Allow users to update their own assignment status (complete / switch)
+drop policy if exists "users update own assignment status" on public.program_assignments;
+create policy "users update own assignment status"
+  on public.program_assignments for update
+  using (user_id = auth.uid());
+
+-- Allow users to insert their own assignments (needed for self-service switching)
+drop policy if exists "users insert own assignment" on public.program_assignments;
+create policy "users insert own assignment"
+  on public.program_assignments for insert
+  with check (user_id = auth.uid() or public.is_admin());
+
+
+-- ── Updated auto-assign trigger (handles status + new programs) ───────────────
+
+create or replace function public.auto_assign_program_on_intake()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_program_id   uuid;
+  v_program_name text;
+begin
+  if not (new.intake_completed = true and (old.intake_completed is distinct from true)) then
+    return new;
+  end if;
+
+  -- Skip if already has an active assignment
+  if exists (
+    select 1 from public.program_assignments
+    where user_id = new.id and status = 'active'
+  ) then
+    return new;
+  end if;
+
+  -- Map experience + goal + days_per_week to program name
+  if new.experience = 'beginner' then
+    v_program_name := 'Beginner Foundation';
+  elsif new.goal = 'athletic_performance' then
+    v_program_name := case when new.days_per_week >= 5 then 'Athletic Performance' else 'Beginner Foundation' end;
+  elsif new.goal = 'cut' then
+    v_program_name := case when new.days_per_week >= 6 then 'The 6-Week Cut' else 'Beginner Foundation' end;
+  elsif new.goal = 'bulk' then
+    if new.days_per_week >= 6 then
+      v_program_name := 'Push / Pull / Legs';
+    elsif new.days_per_week >= 5 then
+      v_program_name := 'The 8-Week Bulk';
+    elsif new.days_per_week >= 4 then
+      v_program_name := 'Upper / Lower Classic';
+    else
+      v_program_name := 'Beginner Foundation';
+    end if;
+  elsif new.goal = 'maintain' then
+    v_program_name := case when new.days_per_week >= 5 then 'Rotating Split' else 'Beginner Foundation' end;
+  else
+    v_program_name := 'Beginner Foundation';
+  end if;
+
+  select id into v_program_id
+  from public.programs
+  where name = v_program_name and is_active = true
+  limit 1;
+
+  if v_program_id is null then
+    select id into v_program_id from public.programs where is_active = true limit 1;
+  end if;
+
+  if v_program_id is not null then
+    insert into public.program_assignments (user_id, program_id, start_date, assigned_by, status)
+    values (new.id, v_program_id, current_date, null, 'active');
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists after_intake_completed on public.profiles;
+create trigger after_intake_completed
+  after update on public.profiles
+  for each row
+  execute function public.auto_assign_program_on_intake();
+
+
 -- ── After running this: ──────────────────
 -- 1. Sign up via the app
 -- 2. Promote yourself to admin:
 --    update public.profiles set role = 'admin' where id = '<your-user-id>';
--- 3. Programs are already seeded (seed.js already ran successfully)
+-- 3. Programs are already seeded (seed.js + seed-programs-v2.js)
+-- 4. Existing program_assignments rows will have status = 'active' (the column default)

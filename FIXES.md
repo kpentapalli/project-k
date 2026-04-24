@@ -155,6 +155,27 @@ where user_id = (select id from auth.users where email = 'kpentapalli@gmail.com'
 
 ---
 
+## F021 — Muscle cards (and all dashboard content) disappear after completing a program
+**Problem:** After marking a program complete, users saw only the "No program assigned yet" holding state. Muscle Status, Weight, Recent Workouts, and all stats vanished. This looked like a data bug ("muscle cards not updating") but was purely a render gate — the entire dashboard body was wrapped in `{!assignment ? <holding> : <everything>}`, so losing the active assignment hid all program-agnostic data alongside program-specific data.  
+**Fix:**
+- Moved stats grid, WeightSection, Muscle Status, and Recent Workouts outside the `assignment` conditional — they depend only on `workout_logs` / `weight_logs` which are already loaded independently.
+- The Program card itself branches internally: when `assignment` exists → shows current program + Switch button; when null → shows a dashed-border "Choose Program" CTA that opens the same `ProgramSwitcher` modal with no `currentAssignment` prop (skip-the-complete-step path).
+- The "Current Week" stat card now shows `—` when no active program (instead of crashing on `currentWeek` being null).
+
+---
+
+## F022 — Muscle cards never registered sessions (label/case + mixed-label mismatch)
+**Problem:** After F021 made the Muscle Status section visible regardless of program state, users noticed cards still weren't updating. Root cause was a two-layer data mismatch between log writes and dashboard reads:
+1. **Casing.** `Program.jsx` wrote `muscle_groups: day.groups.map(g => g.name)` — group names are uppercase (`'CHEST'`, `'BACK'`, `'LEGS'`). Dashboard's `MUSCLES` array is mixed-case (`'Chest'`, `'Back'`, `'Legs'`). `.includes('Chest')` on `['CHEST']` returned false, so no card ever matched.
+2. **Mixed labels.** New programs (PPL, Upper/Lower, Rotating, Athletic Performance) use movement/block labels as group names — `PUSH`, `PULL`, `POWER`, `STRENGTH`, `ACCESSORIES`, `CONDITIONING`, `LOWER`, `UPPER PUSH`, etc. Even with casing fixed, none of these map 1:1 to an anatomical muscle.
+**Fix:**
+- `src/lib/muscles.js` — exports `MUSCLES` (canonical 9), `CATEGORY_TO_MUSCLE` (12-entry map), and `musclesFromDay(day)` helper. Derives muscles from each exercise's `swap_category` (which is already in every seeded exercise and maps 1:1 to a muscle) — ignores group names entirely.
+- `Program.jsx:178` — `muscle_groups: musclesFromDay(day)` instead of the group-name map.
+- `supabase/backfill-muscle-groups.sql` — two-pass UPDATE: (1) joins each `workout_logs` row to its program's JSONB, walks `weeks[wi].days[di].groups[].exercises[].swap_category`, rewrites with canonical muscles; (2) fallback label remap for any row whose program/day no longer resolves. Idempotent.
+**Gotcha:** `group`, `week`, `day` are reserved/keyword-sensitive in Postgres — lateral column aliases had to be renamed (`grp`, `week_obj`, `day_obj`).
+
+---
+
 ## F019 — Intake form shown on every login after session lapse
 **Root cause:** `AuthContext` used both `getSession()` and `onAuthStateChange`. When the app loaded with no existing session, `onAuthStateChange` fired `INITIAL_SESSION` with null → `setProfile(null)`. When the user then logged in and `SIGNED_IN` fired, `loading = session!==null && profile===undefined` evaluated to `false` because profile was already `null` (not `undefined`). ProtectedRoute rendered immediately with stale `profile=null` → `isAdmin=false, intakeCompleted=false` → redirected to `/intake`.  
 **Fix:**

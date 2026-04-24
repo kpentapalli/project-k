@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import TopBar from '../components/TopBar'
 import FeedbackButton from '../components/FeedbackButton'
+import { musclesFromDay } from '../lib/muscles'
 
 export default function Program() {
   const { session } = useAuth()
@@ -21,6 +22,8 @@ export default function Program() {
   const [loading, setLoading] = useState(true)
   const [showIntro, setShowIntro] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
+  const [completing, setCompleting] = useState(false)
+  const [completedToast, setCompletedToast] = useState(false)
 
   useEffect(() => {
     load()
@@ -31,6 +34,7 @@ export default function Program() {
       .from('program_assignments')
       .select('*, programs(*)')
       .eq('user_id', session.user.id)
+      .eq('status', 'active')
       .order('assigned_at', { ascending: false })
       .limit(1)
       .single()
@@ -171,7 +175,7 @@ export default function Program() {
       week_index: currentWeek,
       day_index: currentDay,
       day_title: day?.title,
-      muscle_groups: day?.groups?.map(g => g.name) || [],
+      muscle_groups: musclesFromDay(day),
       completed_at: completedAt,
     }).select().single()
     if (data) setLogs(prev => [...prev, data])
@@ -192,6 +196,20 @@ export default function Program() {
   function dismissIntro() {
     localStorage.setItem(`pk_intro_${assignment.program_id}`, '1')
     setShowIntro(false)
+  }
+
+  async function completeProgram() {
+    if (!assignment?.id || completing) return
+    if (!window.confirm(`Mark "${program.name}" as complete? You can switch to a new program from the dashboard.`)) return
+    setCompleting(true)
+    await supabase
+      .from('program_assignments')
+      .update({ status: 'completed' })
+      .eq('id', assignment.id)
+    setCompletedToast(true)
+    setCompleting(false)
+    // Reload so the page reflects the now-empty active assignment
+    setTimeout(() => load(), 1500)
   }
 
   if (loading) return <div className="loading-screen">Loading...</div>
@@ -233,7 +251,7 @@ export default function Program() {
 
       <div className="page-content">
         <div className="hero">
-          <div className="hero-label">PROGRAM 01 · {program.duration_weeks} WEEKS · {program.days_per_week} DAYS/WK</div>
+          <div className="hero-label">{program.duration_weeks} WEEKS · {program.days_per_week} DAYS/WK · {program.difficulty?.toUpperCase()}</div>
           <h1 className="hero-title">{program.name.toUpperCase()}</h1>
           {program.description && (
             <div className="about-toggle-wrap">
@@ -245,7 +263,20 @@ export default function Program() {
               )}
             </div>
           )}
+          <button
+            className="btn-ghost btn-complete-program"
+            onClick={completeProgram}
+            disabled={completing}
+          >
+            {completing ? 'Completing...' : 'Mark as Complete'}
+          </button>
         </div>
+
+        {completedToast && (
+          <div className="toast toast-success">
+            Program complete! Head to your dashboard to start a new one.
+          </div>
+        )}
 
         <div className="week-tabs">
           {Array.from({ length: program.duration_weeks }).map((_, wi) => (
