@@ -121,7 +121,11 @@ export default function Login() {
         </form>
 
         <p className="auth-note">
-          No account?{' '}
+          Have an invite code?{' '}
+          <a href="/signup" className="auth-link-inline">Sign up</a>
+        </p>
+        <p className="auth-note">
+          No code?{' '}
           <a href="/request-access" className="auth-link-inline">Request access</a>
         </p>
       </div>

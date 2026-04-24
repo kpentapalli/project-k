@@ -4,6 +4,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
 import RequestAccess from './pages/RequestAccess'
+import Signup from './pages/Signup'
 import Intake from './pages/Intake'
 import Dashboard from './pages/Dashboard'
 import Program from './pages/Program'
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/request-access" element={<RequestAccess />} />
+          <Route path="/signup" element={<Signup />} />
 
           <Route path="/intake" element={
             <ProtectedRoute><Intake /></ProtectedRoute>
