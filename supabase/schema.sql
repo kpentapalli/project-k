@@ -431,6 +431,47 @@ create trigger after_intake_completed
   execute function public.auto_assign_program_on_intake();
 
 
+-- ── Signup codes (self-serve invite flow) ────────────────────────────────────
+-- Codes are validated server-side via /api/signup (service role). No anon SELECT.
+
+create table if not exists public.signup_codes (
+  code       text primary key,
+  label      text,
+  max_uses   int  not null default 1,
+  uses       int  not null default 0,
+  expires_at timestamptz,
+  created_at timestamptz not null default now(),
+  created_by uuid references auth.users(id)
+);
+
+alter table public.signup_codes enable row level security;
+
+drop policy if exists "admins manage signup_codes" on public.signup_codes;
+create policy "admins manage signup_codes"
+  on public.signup_codes for all
+  using (public.is_admin())
+  with check (public.is_admin());
+
+-- Atomically claim a signup code slot; returns the row on success, empty on failure.
+-- Called by /api/signup serverless (service role) — not exposed to the browser.
+create or replace function public.claim_signup_code(p_code text)
+returns setof public.signup_codes
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return query
+    update public.signup_codes
+    set uses = uses + 1
+    where code = upper(p_code)
+      and uses < max_uses
+      and (expires_at is null or expires_at > now())
+    returning *;
+end;
+$$;
+
+
 -- ── After running this: ──────────────────
 -- 1. Sign up via the app
 -- 2. Promote yourself to admin:
