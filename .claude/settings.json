@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 60,
+            "statusMessage": "Committing and pushing changes...",
+            "command": "ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0; cd \"$ROOT\"; git add -A -- ':!.claude/settings.local.json'; if [ -z \"$(git diff --cached --name-only 2>/dev/null)\" ]; then git restore --staged . 2>/dev/null; exit 0; fi; BRANCH=$(git branch --show-current); FILES=$(git diff --cached --name-only | head -3 | tr '\n' ', ' | sed 's/, $//'); git commit -m \"Auto: $FILES\" 2>/dev/null || exit 0; git push origin \"$BRANCH\" 2>/dev/null || git push --set-upstream origin \"$BRANCH\" 2>/dev/null; /opt/homebrew/bin/gh pr view 2>/dev/null | grep -q 'title:' || /opt/homebrew/bin/gh pr create --fill 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}
