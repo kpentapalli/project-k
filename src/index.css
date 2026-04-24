@@ -1108,3 +1108,150 @@ a { color: var(--acc); text-decoration: none; }
   transition: color 0.15s, border-color 0.15s;
 }
 .show-more-btn:hover { color: var(--acc); border-color: var(--acc); }
+
+/* ── Ghost button (secondary / outline) ── */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--muted2);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.btn-ghost:hover { border-color: var(--acc); color: var(--acc); }
+.btn-ghost:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── Program card (dashboard section) ── */
+.program-card-section { padding: 0; }
+.program-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.program-card-info { display: flex; flex-direction: column; gap: 2px; }
+.program-card-label {
+  font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.program-card-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  line-height: 1.1;
+}
+.program-card-meta {
+  font-size: 0.72rem;
+  color: var(--muted2);
+  font-family: 'JetBrains Mono', monospace;
+}
+.program-card-empty {
+  border-style: dashed;
+  border-color: var(--acc);
+  background: rgba(57,255,138,0.04);
+}
+.btn-choose-program {
+  width: auto;
+  padding: 10px 20px;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+
+/* ── Complete Program button (in program hero) ── */
+.btn-complete-program {
+  margin-top: 12px;
+  font-size: 0.72rem;
+  padding: 5px 12px;
+  border-color: var(--border);
+  color: var(--muted);
+  align-self: flex-start;
+}
+.btn-complete-program:hover { border-color: var(--warn); color: var(--warn); }
+
+/* ── Toast notification ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 300;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  white-space: nowrap;
+  animation: fadeInUp 0.3s ease;
+}
+.toast-success {
+  background: rgba(57,255,138,0.12);
+  border: 1px solid var(--acc);
+  color: var(--acc);
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── ProgramSwitcher modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+}
+@media (min-width: 600px) { .modal-overlay { align-items: center; } }
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.modal-body { display: flex; flex-direction: column; gap: 12px; }
+.switcher-current {
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.switcher-current-label {
+  font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.switcher-current-name { font-weight: 700; font-size: 0.92rem; color: var(--text); }
+.switcher-preview {
+  background: var(--surface);
+  border-left: 2px solid var(--acc);
+  padding: 8px 12px;
+  border-radius: 0 6px 6px 0;
+}
+.switcher-preview-desc { font-size: 0.8rem; color: var(--muted2); line-height: 1.55; margin: 0; }
+.switcher-warning {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1.5;
+  border-left: 2px solid var(--border2);
+  padding-left: 10px;
+}
+.form-error { font-size: 0.8rem; color: var(--danger); }

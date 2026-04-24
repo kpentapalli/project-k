@@ -19,6 +19,18 @@ const PROGRAM_INTROS = {
     tagline: 'Power. Speed. Strength. In that order.',
     philosophy: 'This program is for people who already train and want more out of their body. Olympic lifting derivatives build explosive power from the ground up. Heavy strength work adds the mass to express it. Conditioning ties it together. Two phases: build the engine (weeks 1–3), then push its limits (weeks 4–6).',
   },
+  'Push / Pull / Legs': {
+    tagline: 'Hit every muscle twice a week. Train like it counts.',
+    philosophy: 'PPL is the standard for intermediate lifters who\'ve outgrown 4-day splits. Two Push sessions, two Pull sessions, two Leg sessions per week — but they\'re not the same workout twice. Push A is chest-led; Push B is shoulder-led. Pull A prioritizes horizontal strength; Pull B is vertical and lat-dominant. Legs A goes quad-first, Legs B goes posterior-chain-first. Six weeks, two phases. Get strong.',
+  },
+  'Upper / Lower Classic': {
+    tagline: 'The split that built every great physique of the \'80s.',
+    philosophy: 'Upper/Lower is simple in structure, brutal in effect. Four days a week: an upper heavy day, a lower heavy day, an upper volume day, a lower volume day. Each week, the reps get lower and the weights get heavier — from hypertrophy work in week 1 all the way to near-max strength sets in week 8. Your entire body gets trained twice a week with full recovery between sessions. Old school. Still works.',
+  },
+  'Rotating Split': {
+    tagline: 'Train every day. Rest when you need it.',
+    philosophy: 'This program has no fixed rest day because life doesn\'t work on a fixed schedule. The 5-session rotation — Push, Pull, Legs, Upper, Full Body — means every muscle group gets worked and recovered on its own timeline. Train when you\'re ready, rest when you\'re not. Complete the 6-week block and repeat it. The goal isn\'t to finish — it\'s to keep going.',
+  },
 }
 
 export default function About() {

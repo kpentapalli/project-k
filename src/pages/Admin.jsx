@@ -24,13 +24,14 @@ export default function Admin() {
       ])
       const profiles = usersRes.data || []
 
-      // Load each user's current assignment
+      // Load each user's current active assignment
       const assignments = await Promise.all(
         profiles.map(p =>
           supabase
             .from('program_assignments')
             .select('*, programs(name)')
             .eq('user_id', p.id)
+            .eq('status', 'active')
             .order('assigned_at', { ascending: false })
             .limit(1)
             .single()
@@ -65,13 +66,21 @@ export default function Admin() {
 
     const { data: adminProfile } = await supabase.from('profiles').select('id').eq('role', 'admin').single()
 
-    await supabase.from('program_assignments').upsert({
+    // Mark existing active assignment complete, then insert a new one
+    if (selected.assignment?.id) {
+      await supabase.from('program_assignments')
+        .update({ status: 'completed' })
+        .eq('id', selected.assignment.id)
+    }
+
+    await supabase.from('program_assignments').insert({
       user_id: selected.id,
       program_id: assignForm.program_id,
       start_date: assignForm.start_date,
       assigned_by: adminProfile.id,
       assigned_at: new Date().toISOString(),
-    }, { onConflict: 'user_id' })
+      status: 'active',
+    })
 
     const prog = programs.find(p => p.id === assignForm.program_id)
     setUsers(prev => prev.map(u => u.id === selected.id

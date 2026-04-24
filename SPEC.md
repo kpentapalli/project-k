@@ -466,21 +466,47 @@ These are explicitly deferred to Phase 2+:
 
 ---
 
-## 10. Phase 2 — Remaining Roadmap (priority order, as of 2026-04-23)
+### P9 — Three new programs seeded ✅
+**What shipped:**
+- **Push / Pull / Legs** — 6d/6wk, intermediate, `goal_tag: 'bulk'`. Two distinct Push, Pull, and Leg sessions (A/B variants hit different angles). Accumulation phase (weeks 1–3, 8–12 reps) → Intensification (weeks 4–6, 5–8 reps).
+- **Upper / Lower Classic** — 4d/8wk, intermediate, `goal_tag: 'bulk'`. Upper Heavy / Lower Heavy / Upper Volume / Lower Volume rotation. Rep waves downward across 8 weeks: 10–12 → 8–10 → 6–8 → 4–6.
+- **Rotating Split** — 6d/6wk (repeatable indefinitely), beginner, `goal_tag: 'maintain'`. 5-day rotation (Push / Pull / Legs / Upper / Full Body) + Day 6 mobility. No fixed rest day; small weight bumps at weeks 3 & 5. Designed to run continuously — complete the 6-week block and repeat.
+- **Auto-assign trigger extended** — `auto_assign_program_on_intake()` now maps bulk + 6 days → PPL, bulk + 4 days → Upper/Lower, maintain + ≥5 days → Rotating Split.
+- **About page** — 3 new program cards added (`PROGRAM_INTROS` in `About.jsx`) with taglines and philosophy blurbs.
+
+**Files changed:** `supabase/schema.sql` (auto-assign trigger), `src/pages/About.jsx`  
+**New files:** `scripts/seed-programs-v2.js`, `scripts/generate-seed-sql.js`, `supabase/seed-programs-v2.sql`
+
+---
+
+### P10 — Program switching + completion flow ✅
+**What shipped:**
+- **DB schema** — `status` column on `program_assignments` (`active` / `completed`, default `active`). Dropped `unique(user_id)` → replaced with partial unique index `program_assignments_one_active_per_user` on `(user_id) where status = 'active'`. Users now keep full program history; only one can be active.
+- **RLS** — added "users update own assignment status" + "users insert own assignment" policies so the client can self-switch and self-complete without admin intervention.
+- **Dashboard Program card** — shows current active program with a **Switch** button. When no active program, renders a dashed-border empty-state CTA ("Ready for your next block? → Choose Program") that opens the same switcher modal.
+- **`ProgramSwitcher` modal** (`src/components/ProgramSwitcher.jsx`) — picks from all active programs, previews description, confirms with clear "your logs are preserved" copy. On confirm: marks current `active` → `completed`, inserts new `active` row. Handles both the switch path (with `currentAssignment`) and the fresh-choice path (no current assignment).
+- **Program page "Mark as Complete"** — ghost button in the program hero. Confirms, updates status, shows a fade-in success toast, auto-reloads after 1.5s.
+- **Admin assign** — changed from `upsert(onConflict: user_id)` to mark-current-complete + insert-new-active to work with the partial unique index.
+- **Auto-assign guard** — trigger now only skips when user has an *active* assignment (previously skipped on any historical row).
+
+**Files changed:** `supabase/schema.sql`, `src/pages/Dashboard.jsx`, `src/pages/Program.jsx`, `src/pages/Admin.jsx`, `src/index.css`  
+**New files:** `src/components/ProgramSwitcher.jsx`
+
+---
+
+## 10. Phase 2 — Remaining Roadmap (priority order, as of 2026-04-24)
 
 | # | Feature | Size | Notes |
 |---|---------|------|-------|
-| 1 | Seed 2–3 more programs | ~1 hr | Review existing 4 first. Broadens auto-assign coverage. |
-| 2 | Program switching + completion flow | ~half day | Unified picker: "program done" and "I want to switch" land same place. Don't archive logs — scope views to current program. |
-| 3 | Program retrospective screen | ~2 hr | On program completion: X days trained, muscles hit, weight change. |
-| 4 | Effort-mode logging (easy/medium/hard per set) | 1 day | Needs design pass first. RPE-lite, lower friction than weight logging. |
-| 5 | Admin program builder | 1–2 days | After #1–4 surface what fields it needs. |
-| 6 | Optional weight-per-set + PRs | 1 day | Advanced users only, fully optional input. |
-| 7 | Custom domain | — | projectk.fit or similar |
-| 8 | Email reminders | — | "Haven't logged in 3 days" — Supabase Edge Functions + Resend |
-| 9 | Exercise media | — | Per-exercise photos in Supabase Storage |
-| 10 | Diet / nutrition tracking | Phase 3 | Separate product surface |
-| 11 | Mobile app | Phase 3 | React Native, after web is solid |
+| 1 | Program retrospective screen | ~2 hr | On program completion: X days trained, muscles hit, weight change. |
+| 2 | Effort-mode logging (easy/medium/hard per set) | 1 day | Needs design pass first. RPE-lite, lower friction than weight logging. |
+| 3 | Admin program builder | 1–2 days | After #1–2 surface what fields it needs. |
+| 4 | Optional weight-per-set + PRs | 1 day | Advanced users only, fully optional input. |
+| 5 | Custom domain | — | projectk.fit or similar |
+| 6 | Email reminders | — | "Haven't logged in 3 days" — Supabase Edge Functions + Resend |
+| 7 | Exercise media | — | Per-exercise photos in Supabase Storage |
+| 8 | Diet / nutrition tracking | Phase 3 | Separate product surface |
+| 9 | Mobile app | Phase 3 | React Native, after web is solid |
 
 ### Backlog (parked — not scheduled)
 | Feature | Why parked |
@@ -489,6 +515,7 @@ These are explicitly deferred to Phase 2+:
 | Weight goal progress bar in stats row | 10-min add — queue when doing next weight work |
 | Muscle grouping (Push/Pull/Legs) | Too advanced for target users |
 | Program-aware muscle priority | Waits for program flexibility feature |
+| Admin-built custom programs per client | Needs admin program builder UX — revisit after #5 (admin program builder) is scoped |
 
 ### Exercise Media — Design Notes (when ready)
 - **Quick version:** SVG icon per muscle group inline on exercise cards (low effort)

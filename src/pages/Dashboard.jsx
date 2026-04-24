@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import TopBar from '../components/TopBar'
 import FeedbackButton from '../components/FeedbackButton'
 import WeightSection from '../components/WeightSection'
+import ProgramSwitcher from '../components/ProgramSwitcher'
 import { getReadinessState, READINESS_PRIORITY } from '../lib/readiness'
 
 const MUSCLES = ['Chest', 'Shoulders', 'Triceps', 'Back', 'Traps', 'Biceps', 'Legs', 'Calves', 'Abs']
@@ -40,6 +41,7 @@ export default function Dashboard() {
   const [assignment, setAssignment] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showAllWorkouts, setShowAllWorkouts] = useState(false)
+  const [showSwitcher, setShowSwitcher] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -51,8 +53,9 @@ export default function Dashboard() {
           .order('completed_at', { ascending: false }),
         supabase
           .from('program_assignments')
-          .select('*, programs(name, duration_weeks)')
+          .select('*, programs(name, duration_weeks, days_per_week, difficulty)')
           .eq('user_id', session.user.id)
+          .eq('status', 'active')
           .order('assigned_at', { ascending: false })
           .limit(1)
           .single(),
@@ -114,15 +117,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {!assignment ? (
-          <div className="holding-state">
-            <div className="holding-icon">🏋️</div>
-            <h2>No program assigned yet</h2>
-            <p>Your trainer will assign a program shortly. Check back soon.</p>
-          </div>
-        ) : (
-          <>
-            {/* ── Stats ── */}
+        {/* ── Stats ── */}
             <div className="stats-grid">
               <div className="stat-card">
                 <div className="stat-value">{logs.length}</div>
@@ -133,10 +128,51 @@ export default function Dashboard() {
                 <div className="stat-label">Day Streak</div>
               </div>
               <div className="stat-card">
-                <div className="stat-value">W{currentWeek}</div>
+                <div className="stat-value">{assignment ? `W${currentWeek}` : '—'}</div>
                 <div className="stat-label">Current Week</div>
               </div>
             </div>
+
+            {/* ── Current Program / Choose Program CTA ── */}
+            <section className="section program-card-section">
+              {assignment ? (
+                <div className="program-card-row">
+                  <div className="program-card-info">
+                    <div className="program-card-label">Current Program</div>
+                    <div className="program-card-name">{assignment.programs?.name}</div>
+                    <div className="program-card-meta">
+                      {assignment.programs?.duration_weeks}wk · {assignment.programs?.days_per_week}d/wk · {assignment.programs?.difficulty}
+                    </div>
+                  </div>
+                  <button className="btn-ghost" onClick={() => setShowSwitcher(true)}>
+                    Switch
+                  </button>
+                </div>
+              ) : (
+                <div className="program-card-row program-card-empty">
+                  <div className="program-card-info">
+                    <div className="program-card-label">No Active Program</div>
+                    <div className="program-card-name">Ready for your next block?</div>
+                    <div className="program-card-meta">Pick a program to start training.</div>
+                  </div>
+                  <button className="btn-primary btn-choose-program" onClick={() => setShowSwitcher(true)}>
+                    Choose Program
+                  </button>
+                </div>
+              )}
+            </section>
+
+            {showSwitcher && (
+              <ProgramSwitcher
+                currentAssignment={assignment}
+                userId={session.user.id}
+                onSwitched={newAssignment => {
+                  setAssignment(newAssignment)
+                  setShowSwitcher(false)
+                }}
+                onClose={() => setShowSwitcher(false)}
+              />
+            )}
 
             {/* ── Weight & Body Composition ── */}
             <WeightSection
@@ -201,8 +237,6 @@ export default function Dashboard() {
                 </>
               )}
             </section>
-          </>
-        )}
       </div>
     </div>
   )
