@@ -526,12 +526,25 @@ ALTER TABLE set_logs ADD COLUMN IF NOT EXISTS effort_states text[];
 
 ---
 
+### P13 — Admin program builder ✅
+**What shipped:**
+- New **Programs** tab in Admin dashboard — lists all programs (active + inactive) with metadata row, Edit and Deactivate/Activate buttons
+- **New Program** / **Edit Program** form:
+  - Metadata fields: name, description, duration (weeks), days/week, goal (cut/bulk/maintain/athletic), difficulty (beginner/intermediate/advanced), active toggle
+  - **Structure JSON textarea** — 400px min-height, monospace, pre-filled with a valid template for new programs; pre-loaded with existing structure for edits
+  - JSON validation on save with inline error message
+  - Creates new row or updates existing via Supabase upsert
+- Programs fetch now includes inactive programs; Users tab assign dropdown filters to `is_active` only
+
+**Files changed:** `src/pages/Admin.jsx`, `src/index.css`
+
+---
+
 ## 10. Phase 2 — Remaining Roadmap (priority order, as of 2026-04-25)
 
 | # | Feature | Size | Notes |
 |---|---------|------|-------|
-| 1 | Admin program builder | 1–2 days | Build and manage programs from the admin dashboard. |
-| 2 | Optional weight-per-set + PRs | 1 day | Advanced users only, fully optional input. |
+| 1 | Optional weight-per-set + PRs | 1 day | Advanced users only, fully optional input. |
 
 ### Phase 3 (deferred)
 | # | Feature | Notes |
