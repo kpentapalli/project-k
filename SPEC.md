@@ -577,6 +577,7 @@ Phase 2 is complete. All planned features (P1–P14) have shipped.
 | "Ready to train now" callout | Needs program customization / dynamic program selection |
 | Weight goal progress bar in stats row | 10-min add — queue when doing next weight work |
 | Muscle grouping (Push/Pull/Legs) | Too advanced for target users |
+| Voice workout logging | Log sets/reps/weights via audio input ("Set 1, 135 lbs, done") — Web Speech API or Whisper |
 | Program-aware muscle priority | Waits for program flexibility feature |
 | Admin-built custom programs per client | Needs admin program builder UX — revisit after #5 (admin program builder) is scoped |
 
