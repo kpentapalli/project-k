@@ -13,7 +13,7 @@ const MUSCLES = ['Chest', 'Shoulders', 'Triceps', 'Back', 'Traps', 'Biceps', 'Le
 
 function daysSince(dateStr) {
   if (!dateStr) return 999
-  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
+  return Math.max(0, Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000))
 }
 
 function calcStreak(logs) {
