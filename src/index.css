@@ -415,6 +415,9 @@ a { color: var(--acc); text-decoration: none; }
 }
 .set-chip:hover { border-color: var(--acc); color: var(--acc); }
 .set-chip.done { background: var(--acc); border-color: var(--acc); color: #000; }
+.set-chip.effort-easy  { background: var(--acc);    border-color: var(--acc);    color: #000; }
+.set-chip.effort-medium { background: var(--warn);  border-color: var(--warn);   color: #000; }
+.set-chip.effort-hard  { background: var(--danger); border-color: var(--danger); color: #fff; }
 
 .rest-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
 .rest-btn {

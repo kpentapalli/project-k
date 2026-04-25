@@ -78,13 +78,24 @@ export default function Program() {
     return logs.some(l => l.week_index === wkIdx && l.day_index === dayIdx)
   }
 
-  function getSetState(wkIdx, dayIdx, gi, ei) {
-    const key = `${wkIdx}-${dayIdx}-${gi}-${ei}`
-    const row = setLogs_.find(s =>
+  function getSetLogRow(wkIdx, dayIdx, gi, ei) {
+    return setLogs_.find(s =>
       s.week_index === wkIdx && s.day_index === dayIdx &&
       s.group_index === gi && s.exercise_index === ei
     )
+  }
+
+  function getSetState(wkIdx, dayIdx, gi, ei) {
+    const row = getSetLogRow(wkIdx, dayIdx, gi, ei)
+    // Derive booleans from effort_states if present, else fall back to set_states
+    if (row?.effort_states?.some(e => e)) {
+      return row.effort_states.map(e => !!e)
+    }
     return row?.set_states || []
+  }
+
+  function getEffortState(wkIdx, dayIdx, gi, ei) {
+    return getSetLogRow(wkIdx, dayIdx, gi, ei)?.effort_states || []
   }
 
   function getExName(wkIdx, dayIdx, gi, ei) {
@@ -110,26 +121,32 @@ export default function Program() {
     return { total, done }
   }
 
-  async function toggleSet(wkIdx, dayIdx, gi, ei, si, totalSets) {
-    const current = getSetState(wkIdx, dayIdx, gi, ei)
-    const arr = Array(totalSets).fill(false)
-    current.forEach((v, i) => { if (i < totalSets) arr[i] = v })
-    arr[si] = !arr[si]
+  const EFFORT_CYCLE = [null, 'easy', 'medium', 'hard']
 
-    const existing = setLogs_.find(s =>
-      s.week_index === wkIdx && s.day_index === dayIdx &&
-      s.group_index === gi && s.exercise_index === ei
-    )
+  async function cycleSetEffort(wkIdx, dayIdx, gi, ei, si, totalSets) {
+    const existing = getSetLogRow(wkIdx, dayIdx, gi, ei)
+    const currentEfforts = existing?.effort_states || Array(totalSets).fill(null)
+    const efforts = Array(totalSets).fill(null)
+    currentEfforts.forEach((v, i) => { if (i < totalSets) efforts[i] = v || null })
+
+    const current = efforts[si]
+    const nextIdx = (EFFORT_CYCLE.indexOf(current) + 1) % EFFORT_CYCLE.length
+    efforts[si] = EFFORT_CYCLE[nextIdx]
+
+    // Keep set_states in sync for day-completion logic
+    const bools = efforts.map(e => !!e)
+    const now = new Date().toISOString()
 
     if (existing) {
-      await supabase.from('set_logs').update({ set_states: arr, updated_at: new Date().toISOString() }).eq('id', existing.id)
-      setSetLogs(prev => prev.map(s => s.id === existing.id ? { ...s, set_states: arr } : s))
+      await supabase.from('set_logs').update({ set_states: bools, effort_states: efforts, updated_at: now }).eq('id', existing.id)
+      setSetLogs(prev => prev.map(s => s.id === existing.id ? { ...s, set_states: bools, effort_states: efforts } : s))
     } else {
       const { data } = await supabase.from('set_logs').insert({
         user_id: session.user.id,
         program_id: assignment.program_id,
         week_index: wkIdx, day_index: dayIdx, group_index: gi, exercise_index: ei,
-        set_states: arr,
+        set_states: bools,
+        effort_states: efforts,
       }).select().single()
       if (data) setSetLogs(prev => [...prev, data])
     }
@@ -317,6 +334,7 @@ export default function Program() {
                   const cardKey = `${currentWeek}-${currentDay}-${gi}-${ei}`
                   const isOpen = openCard === cardKey
                   const setStates = getSetState(currentWeek, currentDay, gi, ei)
+                  const effortStates = getEffortState(currentWeek, currentDay, gi, ei)
                   const allDone = setStates.length === ex.sets && setStates.every(Boolean)
                   const exName = getExName(currentWeek, currentDay, gi, ei)
                   const isSwapped = exName !== ex.name
@@ -346,15 +364,19 @@ export default function Program() {
                         <div className="set-body">
                           {ex.note && <div className="set-hint">{ex.note}</div>}
                           <div className="set-chips">
-                            {Array.from({ length: ex.sets }).map((_, si) => (
-                              <div
-                                key={si}
-                                className={`set-chip ${setStates[si] ? 'done' : ''}`}
-                                onClick={() => toggleSet(currentWeek, currentDay, gi, ei, si, ex.sets)}
-                              >
-                                {setStates[si] ? '✓' : `S${si + 1}`}
-                              </div>
-                            ))}
+                            {Array.from({ length: ex.sets }).map((_, si) => {
+                              const effort = effortStates[si] || null
+                              return (
+                                <div
+                                  key={si}
+                                  className={`set-chip${effort ? ` effort-${effort}` : ''}`}
+                                  onClick={() => cycleSetEffort(currentWeek, currentDay, gi, ei, si, ex.sets)}
+                                  title={effort ? effort.charAt(0).toUpperCase() + effort.slice(1) : `Set ${si + 1}`}
+                                >
+                                  {effort ? effort[0].toUpperCase() : `S${si + 1}`}
+                                </div>
+                              )
+                            })}
                           </div>
                           <div className="rest-row">
                             <button className="rest-btn" onClick={() => startTimer(cardKey)}>⏱ 60s rest</button>

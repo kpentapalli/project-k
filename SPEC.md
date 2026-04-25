@@ -510,13 +510,28 @@ These are explicitly deferred to Phase 2+:
 
 ---
 
+### P12 — Effort-mode logging ✅
+**What shipped:**
+- Set chips now cycle through 4 states on tap: empty → **Easy** (green) → **Medium** (orange) → **Hard** (red) → empty
+- `effort_states text[]` column added to `set_logs` (additive — old rows fall back to `set_states` boolean[])
+- `set_states` kept in sync with effort data so day-completion and progress bar logic are unchanged
+- Chip labels: `S1`/`S2`… when empty, `E`/`M`/`H` when effort is set; tooltip shows full word
+
+**Required DB migration** (run once in Supabase SQL Editor):
+```sql
+ALTER TABLE set_logs ADD COLUMN IF NOT EXISTS effort_states text[];
+```
+
+**Files changed:** `src/pages/Program.jsx`, `src/index.css`
+
+---
+
 ## 10. Phase 2 — Remaining Roadmap (priority order, as of 2026-04-25)
 
 | # | Feature | Size | Notes |
 |---|---------|------|-------|
-| 1 | Effort-mode logging (easy/medium/hard per set) | 1 day | Needs design pass first. RPE-lite, lower friction than weight logging. |
-| 2 | Admin program builder | 1–2 days | After #1 surfaces what fields it needs. |
-| 3 | Optional weight-per-set + PRs | 1 day | Advanced users only, fully optional input. |
+| 1 | Admin program builder | 1–2 days | Build and manage programs from the admin dashboard. |
+| 2 | Optional weight-per-set + PRs | 1 day | Advanced users only, fully optional input. |
 
 ### Phase 3 (deferred)
 | # | Feature | Notes |
