@@ -25,6 +25,7 @@ export default function Program() {
   const [showIntro, setShowIntro] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [completing, setCompleting] = useState(false)
+  const [weightInputs, setWeightInputs] = useState({})
 
   useEffect(() => {
     load()
@@ -96,6 +97,61 @@ export default function Program() {
 
   function getEffortState(wkIdx, dayIdx, gi, ei) {
     return getSetLogRow(wkIdx, dayIdx, gi, ei)?.effort_states || []
+  }
+
+  function getWeights(wkIdx, dayIdx, gi, ei) {
+    return getSetLogRow(wkIdx, dayIdx, gi, ei)?.weights || []
+  }
+
+  // Max weight ever recorded for this exercise position across all program set_logs
+  function getExerciseBestWeight(gi, ei, excludeWk, excludeDay) {
+    let max = 0
+    for (const log of setLogs_) {
+      if (log.group_index !== gi || log.exercise_index !== ei) continue
+      if (log.week_index === excludeWk && log.day_index === excludeDay) continue
+      for (const w of (log.weights || [])) {
+        if (w && w > max) max = w
+      }
+    }
+    return max
+  }
+
+  function initWeightInputs(cardKey, wkIdx, dayIdx, gi, ei, totalSets) {
+    const saved = getWeights(wkIdx, dayIdx, gi, ei)
+    const inputs = Array(totalSets).fill('').map((_, i) =>
+      saved[i] != null ? String(saved[i]) : ''
+    )
+    setWeightInputs(prev => ({ ...prev, [cardKey]: inputs }))
+  }
+
+  function handleWeightChange(cardKey, si, value) {
+    setWeightInputs(prev => {
+      const arr = [...(prev[cardKey] || [])]
+      arr[si] = value
+      return { ...prev, [cardKey]: arr }
+    })
+  }
+
+  async function saveWeights(wkIdx, dayIdx, gi, ei, totalSets, inputs) {
+    const weights = Array(totalSets).fill(null).map((_, i) => {
+      const v = parseFloat(inputs[i])
+      return isNaN(v) ? null : v
+    })
+    const existing = getSetLogRow(wkIdx, dayIdx, gi, ei)
+    const now = new Date().toISOString()
+    if (existing) {
+      await supabase.from('set_logs').update({ weights, updated_at: now }).eq('id', existing.id)
+      setSetLogs(prev => prev.map(s => s.id === existing.id ? { ...s, weights } : s))
+    } else {
+      const bools = Array(totalSets).fill(false)
+      const { data } = await supabase.from('set_logs').insert({
+        user_id: session.user.id,
+        program_id: assignment.program_id,
+        week_index: wkIdx, day_index: dayIdx, group_index: gi, exercise_index: ei,
+        set_states: bools, effort_states: Array(totalSets).fill(null), weights,
+      }).select().single()
+      if (data) setSetLogs(prev => [...prev, data])
+    }
   }
 
   function getExName(wkIdx, dayIdx, gi, ei) {
@@ -338,13 +394,24 @@ export default function Program() {
                   const allDone = setStates.length === ex.sets && setStates.every(Boolean)
                   const exName = getExName(currentWeek, currentDay, gi, ei)
                   const isSwapped = exName !== ex.name
+                  const cardWeights = weightInputs[cardKey] || []
+                  const prevBest = getExerciseBestWeight(gi, ei, currentWeek, currentDay)
+                  const currentMax = Math.max(...cardWeights.map(v => parseFloat(v) || 0))
+                  const isPR = prevBest > 0 && currentMax > prevBest
 
                   return (
                     <div className={`ex-card ${allDone ? 'done' : ''}`} key={ei}>
-                      <div className="ex-head" onClick={() => setOpenCard(isOpen ? null : cardKey)}>
+                      <div className="ex-head" onClick={() => {
+                        if (isOpen) { setOpenCard(null) }
+                        else { setOpenCard(cardKey); initWeightInputs(cardKey, currentWeek, currentDay, gi, ei, ex.sets) }
+                      }}>
                         <div className="ex-num">{String(ei + 1).padStart(2, '0')}</div>
                         <div className="ex-info">
-                          <div className="ex-name">{exName}{isSwapped && <span className="swapped-badge">swapped</span>}</div>
+                          <div className="ex-name">
+                            {exName}
+                            {isSwapped && <span className="swapped-badge">swapped</span>}
+                            {isPR && <span className="pr-badge">★ PR</span>}
+                          </div>
                           <div className="ex-meta"><b>{ex.sets} sets</b> × {ex.reps} reps</div>
                         </div>
                         <div className="ex-actions">
@@ -377,6 +444,22 @@ export default function Program() {
                                 </div>
                               )
                             })}
+                          </div>
+                          <div className="weight-row">
+                            {Array.from({ length: ex.sets }).map((_, si) => (
+                              <input
+                                key={si}
+                                type="number"
+                                min="0"
+                                step="2.5"
+                                className="weight-input"
+                                placeholder="lbs"
+                                value={cardWeights[si] ?? ''}
+                                onChange={e => handleWeightChange(cardKey, si, e.target.value)}
+                                onBlur={() => saveWeights(currentWeek, currentDay, gi, ei, ex.sets, weightInputs[cardKey] || [])}
+                                onClick={e => e.stopPropagation()}
+                              />
+                            ))}
                           </div>
                           <div className="rest-row">
                             <button className="rest-btn" onClick={() => startTimer(cardKey)}>⏱ 60s rest</button>

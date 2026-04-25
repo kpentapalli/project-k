@@ -540,11 +540,27 @@ ALTER TABLE set_logs ADD COLUMN IF NOT EXISTS effort_states text[];
 
 ---
 
-## 10. Phase 2 — Remaining Roadmap (priority order, as of 2026-04-25)
+### P14 — Optional weight-per-set + PRs ✅
+**What shipped:**
+- Weight input row below set chips inside each expanded exercise card — one `lbs` input per set
+- Inputs are optional (blank = no weight logged); save on blur to avoid excessive DB writes
+- `weights numeric[]` column added to `set_logs` (additive — old rows unaffected)
+- **PR detection:** after any set blur, scans all prior `set_logs` for the current program (all weeks/days except the current one) to find the historical max weight logged for that exercise position
+- `★ PR` badge displayed next to the exercise name when the current session max beats the prior best (only shown when a prior best exists)
+- Inputs styled: 56px wide, monospace, spinner arrows hidden for clean appearance
 
-| # | Feature | Size | Notes |
-|---|---------|------|-------|
-| 1 | Optional weight-per-set + PRs | 1 day | Advanced users only, fully optional input. |
+**Required DB migration** (run once in Supabase SQL Editor):
+```sql
+ALTER TABLE set_logs ADD COLUMN IF NOT EXISTS weights numeric[];
+```
+
+**Files changed:** `src/pages/Program.jsx`, `src/index.css`
+
+---
+
+## 10. Phase 2 — Remaining Roadmap
+
+Phase 2 is complete. All planned features (P1–P14) have shipped.
 
 ### Phase 3 (deferred)
 | # | Feature | Notes |

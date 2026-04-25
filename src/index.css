@@ -415,6 +415,44 @@ a { color: var(--acc); text-decoration: none; }
 }
 .set-chip:hover { border-color: var(--acc); color: var(--acc); }
 .set-chip.done { background: var(--acc); border-color: var(--acc); color: #000; }
+
+.weight-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.weight-input {
+  width: 56px;
+  height: 36px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  text-align: center;
+  padding: 0 6px;
+  -moz-appearance: textfield;
+}
+.weight-input::-webkit-outer-spin-button,
+.weight-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.weight-input::placeholder { color: var(--muted); font-size: 0.65rem; }
+.weight-input:focus { outline: none; border-color: var(--acc); }
+
+.pr-badge {
+  display: inline-block;
+  background: var(--acc);
+  color: #000;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
 .set-chip.effort-easy  { background: var(--acc);    border-color: var(--acc);    color: #000; }
 .set-chip.effort-medium { background: var(--warn);  border-color: var(--warn);   color: #000; }
 .set-chip.effort-hard  { background: var(--danger); border-color: var(--danger); color: #fff; }
