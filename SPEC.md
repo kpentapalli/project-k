@@ -562,6 +562,33 @@ ALTER TABLE set_logs ADD COLUMN IF NOT EXISTS weights numeric[];
 
 Phase 2 is complete. All planned features (P1–P14) have shipped.
 
+### Phase 3 (planned)
+
+#### P15 — Set logging UX revamp (3-row aligned layout) 🟡 NEXT
+**Problem:** P12 (effort cycling on every chip) and P14 (separate weight row, one input per set) both add friction to mid-workout logging. Casual users want one tap = done. Advanced users want effort + weight tracking without retyping.
+
+**Design:**
+- **Three rows per exercise, aligned columns by set number:**
+  ```
+  S1  S2  S3  S4    ← completion (tap = done) — always visible
+  E1  E2  E3  E4    ← effort (tap to cycle E/M/H) — optional row
+  W1  W2  W3  W4    ← weight (numeric input)    — optional row
+  ```
+- **Casual default:** only the completion row is visible. Existing single-tap behavior is restored (no E/M/H cycling on the main chip).
+- **Advanced toggle:** small `⚙ track more` button on the card reveals the effort + weight rows. Toggle state persists per-user in `localStorage` (e.g., `pk_track_more`) so power users see them on every card.
+- **Weight auto-propagate:** typing a value in W1 pre-fills W2/W3/W4 with the same value. Tap any cell to override (drop sets, ascending weight). Pre-fill source: previous-session weight for the exercise (cross-week PR scan already exists from P14).
+- **Effort optional per cell:** empty is a valid state. No prompts, no required entry. Cycle: empty → E → M → H → empty.
+- **Cells visually aligned:** same width, same horizontal position. Looks like one composite input, not three.
+- **Set chip cycling from P12 reverts:** main S1/S2/S3 chips become single-tap done/undone. Effort moves to its own dedicated row.
+
+**DB:** no migration — uses existing `set_states`, `effort_states`, `weights` columns from P12/P14.
+
+**Files to change:** `src/pages/Program.jsx`, `src/index.css`. Likely a new sub-component for the 3-row block.
+
+**Switch to Opus before coding.**
+
+---
+
 ### Phase 3 (deferred)
 | # | Feature | Notes |
 |---|---------|-------|
@@ -578,6 +605,8 @@ Phase 2 is complete. All planned features (P1–P14) have shipped.
 | Weight goal progress bar in stats row | 10-min add — queue when doing next weight work |
 | Muscle grouping (Push/Pull/Legs) | Too advanced for target users |
 | Voice workout logging | Log sets/reps/weights via audio input ("Set 1, 135 lbs, done") — Web Speech API or Whisper |
+| Incomplete workout tracking — banner | When sets are skipped, surface "Last session: 12/19 sets — missed 3 chest, 4 triceps" banner on next workout. Read-only signal, user decides what to do. ~1 day. |
+| Incomplete workout tracking — dynamic adjustment | Reshape next scheduled day on-the-fly to recover missed sets / rebalance muscle volume. Conflicts with static-program-JSON model — needs runtime program-mutation layer. Multi-week refactor. |
 | Program-aware muscle priority | Waits for program flexibility feature |
 | Admin-built custom programs per client | Needs admin program builder UX — revisit after #5 (admin program builder) is scoped |
 
