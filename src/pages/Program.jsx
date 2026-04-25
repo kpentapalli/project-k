@@ -26,6 +26,15 @@ export default function Program() {
   const [showAbout, setShowAbout] = useState(false)
   const [completing, setCompleting] = useState(false)
   const [weightInputs, setWeightInputs] = useState({})
+  const [trackMore, setTrackMore] = useState(() => localStorage.getItem('pk_track_more') === '1')
+
+  function toggleTrackMore() {
+    setTrackMore(v => {
+      const next = !v
+      localStorage.setItem('pk_track_more', next ? '1' : '0')
+      return next
+    })
+  }
 
   useEffect(() => {
     load()
@@ -87,12 +96,7 @@ export default function Program() {
   }
 
   function getSetState(wkIdx, dayIdx, gi, ei) {
-    const row = getSetLogRow(wkIdx, dayIdx, gi, ei)
-    // Derive booleans from effort_states if present, else fall back to set_states
-    if (row?.effort_states?.some(e => e)) {
-      return row.effort_states.map(e => !!e)
-    }
-    return row?.set_states || []
+    return getSetLogRow(wkIdx, dayIdx, gi, ei)?.set_states || []
   }
 
   function getEffortState(wkIdx, dayIdx, gi, ei) {
@@ -116,11 +120,30 @@ export default function Program() {
     return max
   }
 
+  // Most recent prior session's weights for this exercise position (for pre-fill)
+  function getMostRecentWeights(gi, ei, excludeWk, excludeDay) {
+    let best = null
+    let bestKey = -1
+    for (const log of setLogs_) {
+      if (log.group_index !== gi || log.exercise_index !== ei) continue
+      if (log.week_index === excludeWk && log.day_index === excludeDay) continue
+      if (!log.weights || !log.weights.some(w => w != null)) continue
+      const key = log.week_index * 100 + log.day_index
+      if (key > bestKey) { bestKey = key; best = log }
+    }
+    return best?.weights || []
+  }
+
   function initWeightInputs(cardKey, wkIdx, dayIdx, gi, ei, totalSets) {
     const saved = getWeights(wkIdx, dayIdx, gi, ei)
-    const inputs = Array(totalSets).fill('').map((_, i) =>
-      saved[i] != null ? String(saved[i]) : ''
-    )
+    const prev = getMostRecentWeights(gi, ei, wkIdx, dayIdx)
+    const prevFallback = prev.find(w => w != null)
+    const inputs = Array(totalSets).fill('').map((_, i) => {
+      if (saved[i] != null) return String(saved[i])
+      if (prev[i] != null) return String(prev[i])
+      if (prevFallback != null) return String(prevFallback)
+      return ''
+    })
     setWeightInputs(prev => ({ ...prev, [cardKey]: inputs }))
   }
 
@@ -128,6 +151,13 @@ export default function Program() {
     setWeightInputs(prev => {
       const arr = [...(prev[cardKey] || [])]
       arr[si] = value
+      // Cascade: fill empty subsequent cells with same value (first-session ergonomics).
+      // Skips cells that already have a value (preserves drop sets and pre-filled prev-session weights).
+      if (value !== '') {
+        for (let i = si + 1; i < arr.length; i++) {
+          if (!arr[i]) arr[i] = value
+        }
+      }
       return { ...prev, [cardKey]: arr }
     })
   }
@@ -179,6 +209,29 @@ export default function Program() {
 
   const EFFORT_CYCLE = [null, 'easy', 'medium', 'hard']
 
+  async function cycleSetDone(wkIdx, dayIdx, gi, ei, si, totalSets) {
+    const existing = getSetLogRow(wkIdx, dayIdx, gi, ei)
+    const currentBools = existing?.set_states || Array(totalSets).fill(false)
+    const bools = Array(totalSets).fill(false)
+    currentBools.forEach((v, i) => { if (i < totalSets) bools[i] = !!v })
+    bools[si] = !bools[si]
+
+    const now = new Date().toISOString()
+    if (existing) {
+      await supabase.from('set_logs').update({ set_states: bools, updated_at: now }).eq('id', existing.id)
+      setSetLogs(prev => prev.map(s => s.id === existing.id ? { ...s, set_states: bools } : s))
+    } else {
+      const { data } = await supabase.from('set_logs').insert({
+        user_id: session.user.id,
+        program_id: assignment.program_id,
+        week_index: wkIdx, day_index: dayIdx, group_index: gi, exercise_index: ei,
+        set_states: bools,
+        effort_states: Array(totalSets).fill(null),
+      }).select().single()
+      if (data) setSetLogs(prev => [...prev, data])
+    }
+  }
+
   async function cycleSetEffort(wkIdx, dayIdx, gi, ei, si, totalSets) {
     const existing = getSetLogRow(wkIdx, dayIdx, gi, ei)
     const currentEfforts = existing?.effort_states || Array(totalSets).fill(null)
@@ -189,19 +242,16 @@ export default function Program() {
     const nextIdx = (EFFORT_CYCLE.indexOf(current) + 1) % EFFORT_CYCLE.length
     efforts[si] = EFFORT_CYCLE[nextIdx]
 
-    // Keep set_states in sync for day-completion logic
-    const bools = efforts.map(e => !!e)
     const now = new Date().toISOString()
-
     if (existing) {
-      await supabase.from('set_logs').update({ set_states: bools, effort_states: efforts, updated_at: now }).eq('id', existing.id)
-      setSetLogs(prev => prev.map(s => s.id === existing.id ? { ...s, set_states: bools, effort_states: efforts } : s))
+      await supabase.from('set_logs').update({ effort_states: efforts, updated_at: now }).eq('id', existing.id)
+      setSetLogs(prev => prev.map(s => s.id === existing.id ? { ...s, effort_states: efforts } : s))
     } else {
       const { data } = await supabase.from('set_logs').insert({
         user_id: session.user.id,
         program_id: assignment.program_id,
         week_index: wkIdx, day_index: dayIdx, group_index: gi, exercise_index: ei,
-        set_states: bools,
+        set_states: Array(totalSets).fill(false),
         effort_states: efforts,
       }).select().single()
       if (data) setSetLogs(prev => [...prev, data])
@@ -381,7 +431,16 @@ export default function Program() {
             <div className="progress-bar-wrap">
               <div className="progress-bar" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
             </div>
-            <div className="progress-label">{done} / {total} sets</div>
+            <div className="progress-label-row">
+              <div className="progress-label">{done} / {total} sets</div>
+              <button
+                className={`track-toggle ${trackMore ? 'on' : ''}`}
+                onClick={toggleTrackMore}
+                title="Toggle effort + weight tracking"
+              >
+                ⚙ {trackMore ? 'Tracking effort + weight' : 'Track effort + weight'}
+              </button>
+            </div>
 
             {day.groups?.map((group, gi) => (
               <div className="ex-group" key={gi}>
@@ -430,36 +489,57 @@ export default function Program() {
                       {isOpen && (
                         <div className="set-body">
                           {ex.note && <div className="set-hint">{ex.note}</div>}
-                          <div className="set-chips">
-                            {Array.from({ length: ex.sets }).map((_, si) => {
-                              const effort = effortStates[si] || null
-                              return (
-                                <div
-                                  key={si}
-                                  className={`set-chip${effort ? ` effort-${effort}` : ''}`}
-                                  onClick={() => cycleSetEffort(currentWeek, currentDay, gi, ei, si, ex.sets)}
-                                  title={effort ? effort.charAt(0).toUpperCase() + effort.slice(1) : `Set ${si + 1}`}
-                                >
-                                  {effort ? effort[0].toUpperCase() : `S${si + 1}`}
-                                </div>
-                              )
-                            })}
-                          </div>
-                          <div className="weight-row">
-                            {Array.from({ length: ex.sets }).map((_, si) => (
-                              <input
-                                key={si}
-                                type="number"
-                                min="0"
-                                step="2.5"
-                                className="weight-input"
-                                placeholder="lbs"
-                                value={cardWeights[si] ?? ''}
-                                onChange={e => handleWeightChange(cardKey, si, e.target.value)}
-                                onBlur={() => saveWeights(currentWeek, currentDay, gi, ei, ex.sets, weightInputs[cardKey] || [])}
-                                onClick={e => e.stopPropagation()}
-                              />
-                            ))}
+                          <div className="set-grid">
+                            <div className="set-row set-row-done">
+                              {Array.from({ length: ex.sets }).map((_, si) => {
+                                const isDone = !!setStates[si]
+                                return (
+                                  <div
+                                    key={si}
+                                    className={`set-cell set-chip ${isDone ? 'done' : ''}`}
+                                    onClick={() => cycleSetDone(currentWeek, currentDay, gi, ei, si, ex.sets)}
+                                    title={isDone ? `Set ${si + 1} done` : `Tap to mark set ${si + 1} done`}
+                                  >
+                                    {isDone ? '✓' : `S${si + 1}`}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                            {trackMore && (
+                              <div className="set-row set-row-effort">
+                                {Array.from({ length: ex.sets }).map((_, si) => {
+                                  const effort = effortStates[si] || null
+                                  return (
+                                    <div
+                                      key={si}
+                                      className={`set-cell effort-cell${effort ? ` effort-${effort}` : ''}`}
+                                      onClick={() => cycleSetEffort(currentWeek, currentDay, gi, ei, si, ex.sets)}
+                                      title={effort ? effort.charAt(0).toUpperCase() + effort.slice(1) : `Set ${si + 1} effort (tap E/M/H)`}
+                                    >
+                                      {effort ? effort[0].toUpperCase() : '–'}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )}
+                            {trackMore && (
+                              <div className="set-row set-row-weight">
+                                {Array.from({ length: ex.sets }).map((_, si) => (
+                                  <input
+                                    key={si}
+                                    type="number"
+                                    min="0"
+                                    step="2.5"
+                                    className="set-cell weight-input"
+                                    placeholder="lbs"
+                                    value={cardWeights[si] ?? ''}
+                                    onChange={e => handleWeightChange(cardKey, si, e.target.value)}
+                                    onBlur={() => saveWeights(currentWeek, currentDay, gi, ei, ex.sets, weightInputs[cardKey] || [])}
+                                    onClick={e => e.stopPropagation()}
+                                  />
+                                ))}
+                              </div>
+                            )}
                           </div>
                           <div className="rest-row">
                             <button className="rest-btn" onClick={() => startTimer(cardKey)}>⏱ 60s rest</button>

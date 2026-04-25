@@ -564,7 +564,7 @@ Phase 2 is complete. All planned features (P1–P14) have shipped.
 
 ### Phase 3 (planned)
 
-#### P15 — Set logging UX revamp (3-row aligned layout) 🟡 NEXT
+#### P15 — Set logging UX revamp (3-row aligned layout) ✅
 **Problem:** P12 (effort cycling on every chip) and P14 (separate weight row, one input per set) both add friction to mid-workout logging. Casual users want one tap = done. Advanced users want effort + weight tracking without retyping.
 
 **Design:**
@@ -583,9 +583,16 @@ Phase 2 is complete. All planned features (P1–P14) have shipped.
 
 **DB:** no migration — uses existing `set_states`, `effort_states`, `weights` columns from P12/P14.
 
-**Files to change:** `src/pages/Program.jsx`, `src/index.css`. Likely a new sub-component for the 3-row block.
+**Shipped behavior:**
+- `cycleSetDone()` toggles `set_states[si]` boolean (P12 chip cycling reverted; chips show `S1` or `✓`)
+- `cycleSetEffort()` writes only to `effort_states[si]` (no longer in sync with `set_states`)
+- `getSetState()` reverted to read `set_states` directly (was deriving from effort)
+- `getMostRecentWeights()` walks `setLogs_` for the same `(gi, ei)` position, picks the most recent prior session, returns its `weights` array
+- `initWeightInputs()` pre-fills cells: saved → previous-session positional → previous-session fallback (first non-null)
+- `handleWeightChange()` cascades: typing in cell N fills empty cells N+1…end with the same value (only empty cells, preserves drop sets and pre-filled values)
+- Toggle persists in `localStorage.pk_track_more`
 
-**Switch to Opus before coding.**
+**Files changed:** `src/pages/Program.jsx`, `src/index.css`
 
 ---
 
