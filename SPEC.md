@@ -502,11 +502,15 @@ These are explicitly deferred to Phase 2+:
 | 2 | Effort-mode logging (easy/medium/hard per set) | 1 day | Needs design pass first. RPE-lite, lower friction than weight logging. |
 | 3 | Admin program builder | 1–2 days | After #1–2 surface what fields it needs. |
 | 4 | Optional weight-per-set + PRs | 1 day | Advanced users only, fully optional input. |
-| 5 | Custom domain | — | projectk.fit or similar |
-| 6 | Email reminders | — | "Haven't logged in 3 days" — Supabase Edge Functions + Resend |
-| 7 | Exercise media | — | Per-exercise photos in Supabase Storage |
-| 8 | Diet / nutrition tracking | Phase 3 | Separate product surface |
-| 9 | Mobile app | Phase 3 | React Native, after web is solid |
+
+### Phase 3 (deferred)
+| # | Feature | Notes |
+|---|---------|-------|
+| 1 | Custom domain | projectk.fit or similar |
+| 2 | Email reminders | "Haven't logged in 3 days" — Supabase Edge Functions + Resend |
+| 3 | Exercise media | Per-exercise photos in Supabase Storage |
+| 4 | Diet / nutrition tracking | Separate product surface |
+| 5 | Mobile app | React Native, after web is solid |
 
 ### Backlog (parked — not scheduled)
 | Feature | Why parked |
