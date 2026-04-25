@@ -1321,3 +1321,145 @@ a { color: var(--acc); text-decoration: none; }
   .codes-table-header span:nth-child(4), .codes-table-row .code-expires,
   .codes-table-header span:nth-child(5), .codes-table-row .btn-reject-sm { display: none; }
 }
+
+/* ── Retrospective ── */
+.retro-page { max-width: 540px; margin: 0 auto; padding-bottom: 48px; }
+
+.retro-hero {
+  text-align: center;
+  padding: 40px 0 32px;
+}
+.retro-badge {
+  display: inline-block;
+  background: var(--acc);
+  color: #080809;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 4px 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+.retro-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2rem, 8vw, 3rem);
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+.retro-dates {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--muted2);
+  letter-spacing: 0.04em;
+}
+
+.retro-stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.retro-stat {
+  flex: 1;
+  text-align: center;
+  padding: 20px 12px;
+  border-right: 1px solid var(--border);
+}
+.retro-stat:last-child { border-right: none; }
+.retro-stat-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.4rem;
+  color: var(--acc);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.retro-stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+}
+
+.retro-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.retro-section-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  margin-bottom: 16px;
+}
+
+.retro-muscles { display: flex; flex-direction: column; gap: 10px; }
+.retro-muscle-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 32px;
+  align-items: center;
+  gap: 10px;
+}
+.retro-muscle-name {
+  font-size: 0.8rem;
+  color: var(--text);
+}
+.retro-muscle-bar-wrap {
+  height: 6px;
+  background: var(--border2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.retro-muscle-bar {
+  height: 100%;
+  background: var(--acc);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  min-width: 4px;
+}
+.retro-muscle-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--muted2);
+  text-align: right;
+}
+
+.retro-body-row {
+  display: flex;
+  gap: 24px;
+}
+.retro-body-stat { flex: 1; }
+.retro-delta {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2rem;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.retro-delta-down { color: var(--acc); }
+.retro-delta-up { color: var(--warn); }
+.retro-body-label {
+  font-size: 0.8rem;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.retro-body-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--muted2);
+}
+
+.retro-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+.retro-next-btn { width: 100%; }
+.retro-cta .btn-ghost { width: 100%; text-align: center; }

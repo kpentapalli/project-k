@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard'
 import Program from './pages/Program'
 import Admin from './pages/Admin'
 import About from './pages/About'
+import Retrospective from './pages/Retrospective'
 
 export default function App() {
   return (
@@ -39,6 +40,10 @@ export default function App() {
 
           <Route path="/about" element={
             <ProtectedRoute><About /></ProtectedRoute>
+          } />
+
+          <Route path="/retrospective" element={
+            <ProtectedRoute><Retrospective /></ProtectedRoute>
           } />
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

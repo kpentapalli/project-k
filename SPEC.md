@@ -494,14 +494,29 @@ These are explicitly deferred to Phase 2+:
 
 ---
 
-## 10. Phase 2 — Remaining Roadmap (priority order, as of 2026-04-24)
+### P11 — Program retrospective screen ✅
+**What shipped:**
+- `completeProgram()` in `Program.jsx` now navigates to `/retrospective?aid=<id>` instead of showing a toast
+- New `src/pages/Retrospective.jsx` — fetches the completed assignment, filters workout_logs and weight_logs to the program's date range, and shows:
+  - "PROGRAM COMPLETE" hero with program name and date range
+  - Stats row: days trained, total weeks, muscles hit
+  - Muscle breakdown: horizontal bars sorted by session count
+  - Body composition delta (weight + BF%) if weight logs exist for the date range
+  - CTA: "Choose Next Program" (opens `ProgramSwitcher`) + "Back to Dashboard"
+- Removed the old completed toast from `Program.jsx`
+
+**New files:** `src/pages/Retrospective.jsx`  
+**Files changed:** `src/pages/Program.jsx`, `src/App.jsx`, `src/index.css`
+
+---
+
+## 10. Phase 2 — Remaining Roadmap (priority order, as of 2026-04-25)
 
 | # | Feature | Size | Notes |
 |---|---------|------|-------|
-| 1 | Program retrospective screen | ~2 hr | On program completion: X days trained, muscles hit, weight change. |
-| 2 | Effort-mode logging (easy/medium/hard per set) | 1 day | Needs design pass first. RPE-lite, lower friction than weight logging. |
-| 3 | Admin program builder | 1–2 days | After #1–2 surface what fields it needs. |
-| 4 | Optional weight-per-set + PRs | 1 day | Advanced users only, fully optional input. |
+| 1 | Effort-mode logging (easy/medium/hard per set) | 1 day | Needs design pass first. RPE-lite, lower friction than weight logging. |
+| 2 | Admin program builder | 1–2 days | After #1 surfaces what fields it needs. |
+| 3 | Optional weight-per-set + PRs | 1 day | Advanced users only, fully optional input. |
 
 ### Phase 3 (deferred)
 | # | Feature | Notes |

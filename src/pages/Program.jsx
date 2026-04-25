@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import TopBar from '../components/TopBar'
@@ -7,6 +8,7 @@ import { musclesFromDay } from '../lib/muscles'
 
 export default function Program() {
   const { session } = useAuth()
+  const navigate = useNavigate()
   const [assignment, setAssignment] = useState(null)
   const [program, setProgram] = useState(null)
   const [logs, setLogs] = useState([])
@@ -23,7 +25,6 @@ export default function Program() {
   const [showIntro, setShowIntro] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [completing, setCompleting] = useState(false)
-  const [completedToast, setCompletedToast] = useState(false)
 
   useEffect(() => {
     load()
@@ -200,16 +201,13 @@ export default function Program() {
 
   async function completeProgram() {
     if (!assignment?.id || completing) return
-    if (!window.confirm(`Mark "${program.name}" as complete? You can switch to a new program from the dashboard.`)) return
+    if (!window.confirm(`Mark "${program.name}" as complete? You can choose your next program on the next screen.`)) return
     setCompleting(true)
     await supabase
       .from('program_assignments')
       .update({ status: 'completed' })
       .eq('id', assignment.id)
-    setCompletedToast(true)
-    setCompleting(false)
-    // Reload so the page reflects the now-empty active assignment
-    setTimeout(() => load(), 1500)
+    navigate(`/retrospective?aid=${assignment.id}`)
   }
 
   if (loading) return <div className="loading-screen">Loading...</div>
@@ -271,12 +269,6 @@ export default function Program() {
             {completing ? 'Completing...' : 'Mark as Complete'}
           </button>
         </div>
-
-        {completedToast && (
-          <div className="toast toast-success">
-            Program complete! Head to your dashboard to start a new one.
-          </div>
-        )}
 
         <div className="week-tabs">
           {Array.from({ length: program.duration_weeks }).map((_, wi) => (
