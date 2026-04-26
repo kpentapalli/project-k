@@ -608,12 +608,11 @@ Phase 2 is complete. All planned features (P1–P14) have shipped.
 | 7 | "Ready to train now" callout | Surface which muscle group is freshest given recent training. Needs program customization / dynamic program selection. |
 | 8 | Program-aware muscle priority | Weight muscle readiness by what the assigned program actually trains, not just calendar decay. Waits for program flexibility feature. |
 | 9 | Voice workout logging | Log sets/reps/weights via audio input ("Set 1, 135 lbs, done") — Web Speech API or Whisper. |
+| 10 | Incomplete workout tracking — banner | When sets are skipped, surface "Last session: 12/19 sets — missed 3 chest, 4 triceps" banner on next workout. Read-only signal, user decides what to do. ~1 day. |
+| 11 | Incomplete workout tracking — dynamic adjustment | Reshape next scheduled day on-the-fly to recover missed sets / rebalance muscle volume. Conflicts with static-program-JSON model — needs runtime program-mutation layer. Multi-week refactor. |
 
 ### Backlog (parked — not scheduled)
-| Feature | Why parked |
-|---------|-----------|
-| Incomplete workout tracking — banner | When sets are skipped, surface "Last session: 12/19 sets — missed 3 chest, 4 triceps" banner on next workout. Read-only signal, user decides what to do. ~1 day. |
-| Incomplete workout tracking — dynamic adjustment | Reshape next scheduled day on-the-fly to recover missed sets / rebalance muscle volume. Conflicts with static-program-JSON model — needs runtime program-mutation layer. Multi-week refactor. |
+_Empty — all items promoted to Phase 3 or dropped._
 
 ### Exercise Media — Design Notes (when ready)
 - **Quick version:** SVG icon per muscle group inline on exercise cards (low effort)
