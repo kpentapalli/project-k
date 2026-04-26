@@ -25,11 +25,43 @@ export default function Admin() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('users')
 
+  // Program builder state
+  const EMPTY_PROGRAM = {
+    name: '', description: '', duration_weeks: 6, days_per_week: 5,
+    goal_tag: 'bulk', difficulty: 'intermediate', is_active: true,
+    structure: JSON.stringify({
+      weeks: [
+        {
+          label: 'Week 1',
+          rep_note: '<b>Week 1.</b> Main lifts: <b>8–12 reps</b>.',
+          days: [
+            {
+              title: 'Day 1',
+              sub: 'Day 1 — Description',
+              groups: [
+                {
+                  name: 'GROUP NAME',
+                  exercises: [
+                    { name: 'Exercise Name', sets: 4, reps: '8–12', note: 'Technique note.', swap_category: 'chest_multi' }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      swap_options: {
+        chest_multi: [{ name: 'Alternative Exercise', note: 'Note.' }]
+      }
+    }, null, 2),
+  }
+  const [programEditor, setProgramEditor] = useState({ open: false, data: null, saving: false, error: null })
+
   useEffect(() => {
     async function load() {
       const [usersRes, programsRes, feedbackRes, requestsRes, codesRes] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at'),
-        supabase.from('programs').select('*').eq('is_active', true).order('name'),
+        supabase.from('programs').select('id, name, description, duration_weeks, days_per_week, goal_tag, difficulty, is_active').order('name'),
         supabase.from('feedback').select('*').order('created_at', { ascending: false }),
         supabase.from('access_requests').select('*').order('created_at', { ascending: false }),
         supabase.from('signup_codes').select('*').order('created_at', { ascending: false }),
@@ -155,6 +187,74 @@ export default function Admin() {
     setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: 'rejected' } : r))
   }
 
+  function openNewProgram() {
+    setProgramEditor({ open: true, data: { ...EMPTY_PROGRAM }, saving: false, error: null })
+  }
+
+  function openEditProgram(p) {
+    // Fetch full structure for editing
+    supabase.from('programs').select('*').eq('id', p.id).single().then(({ data }) => {
+      if (!data) return
+      setProgramEditor({
+        open: true,
+        saving: false,
+        error: null,
+        data: {
+          id: data.id,
+          name: data.name,
+          description: data.description || '',
+          duration_weeks: data.duration_weeks,
+          days_per_week: data.days_per_week,
+          goal_tag: data.goal_tag,
+          difficulty: data.difficulty,
+          is_active: data.is_active,
+          structure: JSON.stringify(data.structure, null, 2),
+        }
+      })
+    })
+  }
+
+  async function saveProgram() {
+    const d = programEditor.data
+    let parsed
+    try {
+      parsed = JSON.parse(d.structure)
+    } catch {
+      setProgramEditor(prev => ({ ...prev, error: 'Structure is not valid JSON. Fix it and try again.' }))
+      return
+    }
+    if (!d.name.trim()) {
+      setProgramEditor(prev => ({ ...prev, error: 'Name is required.' }))
+      return
+    }
+    setProgramEditor(prev => ({ ...prev, saving: true, error: null }))
+    const payload = {
+      name: d.name.trim(),
+      description: d.description.trim(),
+      duration_weeks: Number(d.duration_weeks),
+      days_per_week: Number(d.days_per_week),
+      goal_tag: d.goal_tag,
+      difficulty: d.difficulty,
+      is_active: d.is_active,
+      structure: parsed,
+    }
+    if (d.id) {
+      const { error } = await supabase.from('programs').update(payload).eq('id', d.id)
+      if (error) { setProgramEditor(prev => ({ ...prev, saving: false, error: error.message })); return }
+      setPrograms(prev => prev.map(p => p.id === d.id ? { ...p, ...payload } : p))
+    } else {
+      const { data, error } = await supabase.from('programs').insert(payload).select('id, name, description, duration_weeks, days_per_week, goal_tag, difficulty, is_active').single()
+      if (error) { setProgramEditor(prev => ({ ...prev, saving: false, error: error.message })); return }
+      setPrograms(prev => [...prev, data])
+    }
+    setProgramEditor({ open: false, data: null, saving: false, error: null })
+  }
+
+  async function toggleProgramActive(p) {
+    await supabase.from('programs').update({ is_active: !p.is_active }).eq('id', p.id)
+    setPrograms(prev => prev.map(x => x.id === p.id ? { ...x, is_active: !p.is_active } : x))
+  }
+
   if (loading) return <div className="loading-screen">Loading...</div>
 
   return (
@@ -181,6 +281,9 @@ export default function Admin() {
           </button>
           <button className={`week-tab ${activeTab === 'codes' ? 'active' : ''}`} onClick={() => setActiveTab('codes')}>
             Codes ({codes.length})
+          </button>
+          <button className={`week-tab ${activeTab === 'programs' ? 'active' : ''}`} onClick={() => setActiveTab('programs')}>
+            Programs ({programs.length})
           </button>
         </div>
 
@@ -330,6 +433,118 @@ export default function Admin() {
           </div>
         )}
 
+        {activeTab === 'programs' && (
+          <div className="programs-panel">
+            <div className="programs-header">
+              <div className="section-title">Programs ({programs.length})</div>
+              <button className="btn-primary programs-new-btn" onClick={openNewProgram}>+ New Program</button>
+            </div>
+
+            <div className="programs-list">
+              {programs.map(p => (
+                <div key={p.id} className={`program-row ${!p.is_active ? 'program-row-inactive' : ''}`}>
+                  <div className="program-row-info">
+                    <div className="program-row-name">{p.name}</div>
+                    <div className="program-row-meta">
+                      {p.duration_weeks}wk · {p.days_per_week}d/wk · {p.goal_tag} · {p.difficulty}
+                      {!p.is_active && <span className="badge badge-muted" style={{ marginLeft: 8 }}>inactive</span>}
+                    </div>
+                  </div>
+                  <div className="program-row-actions">
+                    <button className="btn-ghost btn-sm" onClick={() => openEditProgram(p)}>Edit</button>
+                    <button className="btn-ghost btn-sm" onClick={() => toggleProgramActive(p)}>
+                      {p.is_active ? 'Deactivate' : 'Activate'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {programEditor.open && (
+              <div className="program-editor">
+                <div className="program-editor-header">
+                  <div className="section-title">{programEditor.data?.id ? 'Edit Program' : 'New Program'}</div>
+                  <button className="modal-close" onClick={() => setProgramEditor({ open: false, data: null, saving: false, error: null })}>✕</button>
+                </div>
+
+                <div className="program-editor-fields">
+                  <div className="program-editor-meta">
+                    <div className="field">
+                      <label>Name</label>
+                      <input type="text" value={programEditor.data.name}
+                        onChange={e => setProgramEditor(prev => ({ ...prev, data: { ...prev.data, name: e.target.value } }))} />
+                    </div>
+                    <div className="field">
+                      <label>Description</label>
+                      <textarea rows={2} value={programEditor.data.description}
+                        onChange={e => setProgramEditor(prev => ({ ...prev, data: { ...prev.data, description: e.target.value } }))} />
+                    </div>
+                    <div className="program-editor-row">
+                      <div className="field">
+                        <label>Duration (weeks)</label>
+                        <input type="number" min="1" max="52" value={programEditor.data.duration_weeks}
+                          onChange={e => setProgramEditor(prev => ({ ...prev, data: { ...prev.data, duration_weeks: e.target.value } }))} />
+                      </div>
+                      <div className="field">
+                        <label>Days / week</label>
+                        <input type="number" min="1" max="7" value={programEditor.data.days_per_week}
+                          onChange={e => setProgramEditor(prev => ({ ...prev, data: { ...prev.data, days_per_week: e.target.value } }))} />
+                      </div>
+                      <div className="field">
+                        <label>Goal</label>
+                        <select value={programEditor.data.goal_tag}
+                          onChange={e => setProgramEditor(prev => ({ ...prev, data: { ...prev.data, goal_tag: e.target.value } }))}>
+                          <option value="cut">Cut</option>
+                          <option value="bulk">Bulk</option>
+                          <option value="maintain">Maintain</option>
+                          <option value="athletic">Athletic</option>
+                        </select>
+                      </div>
+                      <div className="field">
+                        <label>Difficulty</label>
+                        <select value={programEditor.data.difficulty}
+                          onChange={e => setProgramEditor(prev => ({ ...prev, data: { ...prev.data, difficulty: e.target.value } }))}>
+                          <option value="beginner">Beginner</option>
+                          <option value="intermediate">Intermediate</option>
+                          <option value="advanced">Advanced</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="field field-checkbox">
+                      <label>
+                        <input type="checkbox" checked={programEditor.data.is_active}
+                          onChange={e => setProgramEditor(prev => ({ ...prev, data: { ...prev.data, is_active: e.target.checked } }))} />
+                        Active (visible for assignment)
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="field program-structure-field">
+                    <label>Structure <span className="optional">(JSON)</span></label>
+                    <textarea
+                      className="program-structure-textarea"
+                      value={programEditor.data.structure}
+                      onChange={e => setProgramEditor(prev => ({ ...prev, data: { ...prev.data, structure: e.target.value } }))}
+                      spellCheck={false}
+                    />
+                  </div>
+                </div>
+
+                {programEditor.error && <p className="form-error" style={{ marginTop: 8 }}>{programEditor.error}</p>}
+
+                <div className="program-editor-actions">
+                  <button className="btn-primary" onClick={saveProgram} disabled={programEditor.saving}>
+                    {programEditor.saving ? 'Saving...' : programEditor.data?.id ? 'Save Changes' : 'Create Program'}
+                  </button>
+                  <button className="btn-ghost" onClick={() => setProgramEditor({ open: false, data: null, saving: false, error: null })}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'users' && <div className="admin-layout">
           <div className="admin-user-list">
             <div className="section-title">Users ({users.length})</div>
@@ -379,7 +594,7 @@ export default function Admin() {
                     onChange={e => setAssignForm(prev => ({ ...prev, program_id: e.target.value }))}
                   >
                     <option value="">Select a program...</option>
-                    {programs.map(p => (
+                    {programs.filter(p => p.is_active).map(p => (
                       <option key={p.id} value={p.id}>{p.name} ({p.duration_weeks}wk · {p.difficulty})</option>
                     ))}
                   </select>

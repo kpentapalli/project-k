@@ -2,6 +2,13 @@
 
 ---
 
+## F023 — Muscle card shows "Detraining" immediately after logging a workout
+**Root cause:** Workouts are stored at noon UTC (`T12:00:00Z`) for timezone safety. If the user checks the dashboard before noon UTC (e.g. US morning), `Date.now() - noon-UTC` is negative, so `Math.floor(negative / 86400000) = -1`. `getReadinessState(-1)` matches no state and falls through to the array's last entry — `detraining`.  
+**Fix:** Clamped `daysSince()` to a minimum of 0: `Math.max(0, Math.floor(...))` in `src/pages/Dashboard.jsx`. Any negative offset (future-stored timestamp) now correctly resolves to "just trained today" (sore).  
+**File:** `src/pages/Dashboard.jsx`
+
+---
+
 ## F001 — Vite scaffold couldn't run interactively
 **Problem:** `npm create vite` requires an interactive terminal, cancelled in non-TTY shell.  
 **Fix:** Built the project structure manually (package.json, vite.config.js, src files) instead of using the scaffold CLI.

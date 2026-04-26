@@ -494,19 +494,116 @@ These are explicitly deferred to Phase 2+:
 
 ---
 
-## 10. Phase 2 — Remaining Roadmap (priority order, as of 2026-04-24)
+### P11 — Program retrospective screen ✅
+**What shipped:**
+- `completeProgram()` in `Program.jsx` now navigates to `/retrospective?aid=<id>` instead of showing a toast
+- New `src/pages/Retrospective.jsx` — fetches the completed assignment, filters workout_logs and weight_logs to the program's date range, and shows:
+  - "PROGRAM COMPLETE" hero with program name and date range
+  - Stats row: days trained, total weeks, muscles hit
+  - Muscle breakdown: horizontal bars sorted by session count
+  - Body composition delta (weight + BF%) if weight logs exist for the date range
+  - CTA: "Choose Next Program" (opens `ProgramSwitcher`) + "Back to Dashboard"
+- Removed the old completed toast from `Program.jsx`
 
-| # | Feature | Size | Notes |
-|---|---------|------|-------|
-| 1 | Program retrospective screen | ~2 hr | On program completion: X days trained, muscles hit, weight change. |
-| 2 | Effort-mode logging (easy/medium/hard per set) | 1 day | Needs design pass first. RPE-lite, lower friction than weight logging. |
-| 3 | Admin program builder | 1–2 days | After #1–2 surface what fields it needs. |
-| 4 | Optional weight-per-set + PRs | 1 day | Advanced users only, fully optional input. |
-| 5 | Custom domain | — | projectk.fit or similar |
-| 6 | Email reminders | — | "Haven't logged in 3 days" — Supabase Edge Functions + Resend |
-| 7 | Exercise media | — | Per-exercise photos in Supabase Storage |
-| 8 | Diet / nutrition tracking | Phase 3 | Separate product surface |
-| 9 | Mobile app | Phase 3 | React Native, after web is solid |
+**New files:** `src/pages/Retrospective.jsx`  
+**Files changed:** `src/pages/Program.jsx`, `src/App.jsx`, `src/index.css`
+
+---
+
+### P12 — Effort-mode logging ✅
+**What shipped:**
+- Set chips now cycle through 4 states on tap: empty → **Easy** (green) → **Medium** (orange) → **Hard** (red) → empty
+- `effort_states text[]` column added to `set_logs` (additive — old rows fall back to `set_states` boolean[])
+- `set_states` kept in sync with effort data so day-completion and progress bar logic are unchanged
+- Chip labels: `S1`/`S2`… when empty, `E`/`M`/`H` when effort is set; tooltip shows full word
+
+**Required DB migration** (run once in Supabase SQL Editor):
+```sql
+ALTER TABLE set_logs ADD COLUMN IF NOT EXISTS effort_states text[];
+```
+
+**Files changed:** `src/pages/Program.jsx`, `src/index.css`
+
+---
+
+### P13 — Admin program builder ✅
+**What shipped:**
+- New **Programs** tab in Admin dashboard — lists all programs (active + inactive) with metadata row, Edit and Deactivate/Activate buttons
+- **New Program** / **Edit Program** form:
+  - Metadata fields: name, description, duration (weeks), days/week, goal (cut/bulk/maintain/athletic), difficulty (beginner/intermediate/advanced), active toggle
+  - **Structure JSON textarea** — 400px min-height, monospace, pre-filled with a valid template for new programs; pre-loaded with existing structure for edits
+  - JSON validation on save with inline error message
+  - Creates new row or updates existing via Supabase upsert
+- Programs fetch now includes inactive programs; Users tab assign dropdown filters to `is_active` only
+
+**Files changed:** `src/pages/Admin.jsx`, `src/index.css`
+
+---
+
+### P14 — Optional weight-per-set + PRs ✅
+**What shipped:**
+- Weight input row below set chips inside each expanded exercise card — one `lbs` input per set
+- Inputs are optional (blank = no weight logged); save on blur to avoid excessive DB writes
+- `weights numeric[]` column added to `set_logs` (additive — old rows unaffected)
+- **PR detection:** after any set blur, scans all prior `set_logs` for the current program (all weeks/days except the current one) to find the historical max weight logged for that exercise position
+- `★ PR` badge displayed next to the exercise name when the current session max beats the prior best (only shown when a prior best exists)
+- Inputs styled: 56px wide, monospace, spinner arrows hidden for clean appearance
+
+**Required DB migration** (run once in Supabase SQL Editor):
+```sql
+ALTER TABLE set_logs ADD COLUMN IF NOT EXISTS weights numeric[];
+```
+
+**Files changed:** `src/pages/Program.jsx`, `src/index.css`
+
+---
+
+## 10. Phase 2 — Remaining Roadmap
+
+Phase 2 is complete. All planned features (P1–P14) have shipped.
+
+### Phase 3 (planned)
+
+#### P15 — Set logging UX revamp (3-row aligned layout) ✅
+**Problem:** P12 (effort cycling on every chip) and P14 (separate weight row, one input per set) both add friction to mid-workout logging. Casual users want one tap = done. Advanced users want effort + weight tracking without retyping.
+
+**Design:**
+- **Three rows per exercise, aligned columns by set number:**
+  ```
+  S1  S2  S3  S4    ← completion (tap = done) — always visible
+  E1  E2  E3  E4    ← effort (tap to cycle E/M/H) — optional row
+  W1  W2  W3  W4    ← weight (numeric input)    — optional row
+  ```
+- **Casual default:** only the completion row is visible. Existing single-tap behavior is restored (no E/M/H cycling on the main chip).
+- **Advanced toggle:** small `⚙ track more` button on the card reveals the effort + weight rows. Toggle state persists per-user in `localStorage` (e.g., `pk_track_more`) so power users see them on every card.
+- **Weight auto-propagate:** typing a value in W1 pre-fills W2/W3/W4 with the same value. Tap any cell to override (drop sets, ascending weight). Pre-fill source: previous-session weight for the exercise (cross-week PR scan already exists from P14).
+- **Effort optional per cell:** empty is a valid state. No prompts, no required entry. Cycle: empty → E → M → H → empty.
+- **Cells visually aligned:** same width, same horizontal position. Looks like one composite input, not three.
+- **Set chip cycling from P12 reverts:** main S1/S2/S3 chips become single-tap done/undone. Effort moves to its own dedicated row.
+
+**DB:** no migration — uses existing `set_states`, `effort_states`, `weights` columns from P12/P14.
+
+**Shipped behavior:**
+- `cycleSetDone()` toggles `set_states[si]` boolean (P12 chip cycling reverted; chips show `S1` or `✓`)
+- `cycleSetEffort()` writes only to `effort_states[si]` (no longer in sync with `set_states`)
+- `getSetState()` reverted to read `set_states` directly (was deriving from effort)
+- `getMostRecentWeights()` walks `setLogs_` for the same `(gi, ei)` position, picks the most recent prior session, returns its `weights` array
+- `initWeightInputs()` pre-fills cells: saved → previous-session positional → previous-session fallback (first non-null)
+- `handleWeightChange()` cascades: typing in cell N fills empty cells N+1…end with the same value (only empty cells, preserves drop sets and pre-filled values)
+- Toggle persists in `localStorage.pk_track_more`
+
+**Files changed:** `src/pages/Program.jsx`, `src/index.css`
+
+---
+
+### Phase 3 (deferred)
+| # | Feature | Notes |
+|---|---------|-------|
+| 1 | Custom domain | projectk.fit or similar |
+| 2 | Email reminders | "Haven't logged in 3 days" — Supabase Edge Functions + Resend |
+| 3 | Exercise media | Per-exercise photos in Supabase Storage |
+| 4 | Diet / nutrition tracking | Separate product surface |
+| 5 | Mobile app | React Native, after web is solid |
 
 ### Backlog (parked — not scheduled)
 | Feature | Why parked |
@@ -514,6 +611,9 @@ These are explicitly deferred to Phase 2+:
 | "Ready to train now" callout | Needs program customization / dynamic program selection |
 | Weight goal progress bar in stats row | 10-min add — queue when doing next weight work |
 | Muscle grouping (Push/Pull/Legs) | Too advanced for target users |
+| Voice workout logging | Log sets/reps/weights via audio input ("Set 1, 135 lbs, done") — Web Speech API or Whisper |
+| Incomplete workout tracking — banner | When sets are skipped, surface "Last session: 12/19 sets — missed 3 chest, 4 triceps" banner on next workout. Read-only signal, user decides what to do. ~1 day. |
+| Incomplete workout tracking — dynamic adjustment | Reshape next scheduled day on-the-fly to recover missed sets / rebalance muscle volume. Conflicts with static-program-JSON model — needs runtime program-mutation layer. Multi-week refactor. |
 | Program-aware muscle priority | Waits for program flexibility feature |
 | Admin-built custom programs per client | Needs admin program builder UX — revisit after #5 (admin program builder) is scoped |
 
