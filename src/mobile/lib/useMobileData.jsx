@@ -243,8 +243,11 @@ export function useMobileData(userId) {
     }).select().single();
     if (data) setUnlocks(prev => [...prev, data]);
 
-    // Add XP
-    await supabase.from('profiles').update({ hero_xp: (profile_xp) => profile_xp + XP.pr }).eq('id', userId);
+    // Add XP — read current, increment, write back
+    const { data: prof } = await supabase.from('profiles').select('hero_xp').eq('id', userId).single();
+    if (prof != null) {
+      await supabase.from('profiles').update({ hero_xp: (prof.hero_xp || 0) + XP.pr }).eq('id', userId);
+    }
     return nextPalette;
   }
 
@@ -261,8 +264,11 @@ export function useMobileData(userId) {
     }).select().single();
     if (data) {
       setWorkoutLogs(prev => [data, ...prev]);
-      // Add workout XP — best-effort update
-      await supabase.rpc('increment_hero_xp', { uid: userId, amount: XP.workout }).catch(() => {});
+      // Add workout XP
+      const { data: prof } = await supabase.from('profiles').select('hero_xp').eq('id', userId).single();
+      if (prof != null) {
+        await supabase.from('profiles').update({ hero_xp: (prof.hero_xp || 0) + XP.workout }).eq('id', userId);
+      }
     }
     return data;
   }
