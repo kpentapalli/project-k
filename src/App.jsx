@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Capacitor } from '@capacitor/core'
 import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import MobileApp from './mobile/MobileApp'
@@ -48,7 +49,7 @@ export default function App() {
             <ProtectedRoute><Retrospective /></ProtectedRoute>
           } />
 
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to={Capacitor.isNativePlatform() ? '/m' : '/dashboard'} replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
