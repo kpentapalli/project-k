@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import MobileApp from './mobile/MobileApp'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
 import RequestAccess from './pages/RequestAccess'
@@ -17,6 +18,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/m" element={<MobileApp />}/>
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/request-access" element={<RequestAccess />} />

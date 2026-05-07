@@ -1,0 +1,77 @@
+/* Project K — Design Tokens (ported from design system) */
+
+:root {
+  --pk-bg:        #080809;
+  --pk-surface:   #101012;
+  --pk-card:      #141416;
+  --pk-card-hi:   #1a1a1d;
+
+  --pk-border:    #222226;
+  --pk-border-2:  #2e2e34;
+  --pk-border-3:  #3a3a42;
+
+  --pk-text:      #f2f2f2;
+  --pk-text-2:    #a0a0aa;
+  --pk-muted:     #888892;
+  --pk-muted-2:   #5a5a66;
+
+  --pk-acc:       #39ff8a;
+  --pk-acc-dim:   #2bd16f;
+  --pk-acc-bg:    rgba(57, 255, 138, 0.08);
+  --pk-acc-line:  rgba(57, 255, 138, 0.30);
+
+  --pk-warn:      #ff9f38;
+  --pk-warn-2:    #f59e0b;
+  --pk-danger:    #ff4747;
+  --pk-danger-2:  #ef4444;
+  --pk-info:      #93c5fd;
+  --pk-info-2:    #3b82f6;
+
+  --pk-font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  --pk-font-body:    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  --pk-font-mono:    ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+
+  --pk-text-xs:   0.75rem;
+  --pk-text-sm:   0.875rem;
+  --pk-text-base: 1rem;
+  --pk-text-md:   1.125rem;
+  --pk-text-lg:   1.5rem;
+  --pk-text-xl:   2rem;
+  --pk-text-2xl:  2.75rem;
+  --pk-text-3xl:  3.5rem;
+
+  --pk-track-tight: 0.02em;
+  --pk-track-wide:  0.06em;
+  --pk-track-mega:  0.12em;
+
+  --pk-space-1:  4px;
+  --pk-space-2:  8px;
+  --pk-space-3:  12px;
+  --pk-space-4:  16px;
+  --pk-space-5:  20px;
+  --pk-space-6:  24px;
+  --pk-space-8:  32px;
+  --pk-space-12: 48px;
+  --pk-space-16: 64px;
+
+  --pk-radius-sm:   4px;
+  --pk-radius-md:   8px;
+  --pk-radius-lg:   10px;
+  --pk-radius-xl:   16px;
+  --pk-radius-pill: 99px;
+
+  --pk-stroke:   1px;
+  --pk-stroke-2: 2px;
+
+  --pk-shadow-fab:   0 4px 16px rgba(0,0,0,0.4);
+  --pk-shadow-toast: 0 4px 20px rgba(0,0,0,0.5);
+  --pk-shadow-acc:   0 0 0 3px rgba(57,255,138,0.15);
+
+  --pk-dur-fast: 0.15s;
+  --pk-dur-med:  0.3s;
+  --pk-ease:     cubic-bezier(0.4, 0, 0.2, 1);
+
+  --pk-topbar-h:  56px;
+  --pk-tabbar-h:  88px;
+  --pk-page-max:  720px;
+}
