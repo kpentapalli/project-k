@@ -3,3 +3,7 @@ dist
 .env
 .env.local
 .DS_Store
+ios/App/Pods
+ios/App/App.xcworkspace/xcuserdata
+ios/App/App/public
+ios/App/capacitor-cordova-ios-plugins
