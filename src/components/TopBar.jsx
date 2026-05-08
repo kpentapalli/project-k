@@ -34,7 +34,7 @@ export default function TopBar({ active }) {
         </button>
         {isAdmin && (
           <button
-            className={`nav-btn ${active === 'admin' ? 'active' : ''}`}
+            className={`nav-btn nav-admin-mobile-hide ${active === 'admin' ? 'active' : ''}`}
             onClick={() => navigate('/admin')}
           >
             Admin
