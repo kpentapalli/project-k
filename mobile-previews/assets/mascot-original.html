@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project K — Knight & Queen mascots</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #1d2b53; color: #fff7e2; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  body { padding: 32px; min-height: 100vh; }
+  .page { max-width: 1180px; margin: 0 auto; }
+  header { padding-bottom: 20px; margin-bottom: 28px; border-bottom: 2px dashed #29366f; }
+  h1 { font-size: 24px; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; }
+  header p { color: #c2c3c7; font-size: 13px; max-width: 64ch; line-height: 1.6; }
+  header p + p { margin-top: 8px; }
+
+  .section-title { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #c2c3c7; margin: 36px 0 14px; }
+
+  /* Two heroes side by side */
+  .heroes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .hero {
+    background: #29366f;
+    border: 4px solid #fff7e2;
+    box-shadow: 0 0 0 4px #1d2b53, 0 0 0 8px #fff7e2;
+    padding: 24px;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    position: relative;
+  }
+  .hero::before {
+    content: attr(data-tag);
+    position: absolute; top: -10px; left: 16px;
+    background: #ffa300; color: #1d2b53;
+    padding: 2px 10px; font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
+    border: 2px solid #fff7e2;
+  }
+  .hero .sprite { width: 192px; height: 192px; image-rendering: pixelated; }
+  .hero .sprite svg { width: 100%; height: 100%; image-rendering: pixelated; }
+  .hero .label { font-size: 10px; letter-spacing: 0.18em; color: #ffa300; }
+  .hero h2 { font-size: 24px; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1; text-shadow: 2px 2px 0 #000; text-align: center; }
+  .hero .desc { font-size: 12px; line-height: 1.6; color: #c2c3c7; text-align: center; max-width: 36ch; }
+  .hero .pal { display: flex; gap: 4px; margin-top: 4px; }
+  .hero .pal i { width: 18px; height: 18px; border: 1px solid #1d2b53; }
+
+  /* Evolution rows */
+  .row {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px;
+    margin-bottom: 24px;
+  }
+  .row-label {
+    font-size: 10px; letter-spacing: 0.18em; color: #ffa300;
+    text-transform: uppercase; margin-bottom: 8px;
+    padding-bottom: 6px; border-bottom: 1px dashed #29366f;
+  }
+  .card {
+    background: #29366f;
+    border: 3px solid #fff7e2;
+    box-shadow: 0 0 0 3px #1d2b53, 0 0 0 6px #fff7e2;
+    padding: 16px 10px 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    position: relative;
+  }
+  .card .tag {
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    background: #ffa300; color: #1d2b53; padding: 2px 8px;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.14em;
+    border: 2px solid #fff7e2; white-space: nowrap;
+  }
+  .card.default { border-color: #ffe66d; box-shadow: 0 0 0 3px #1d2b53, 0 0 0 6px #ffe66d; }
+  .card.default .tag { background: #00e436; }
+  .sprite-sm { width: 96px; height: 96px; image-rendering: pixelated; }
+  .sprite-sm svg { width: 100%; height: 100%; }
+  .card .nm { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; text-shadow: 1.5px 1.5px 0 #000; text-align: center; }
+  .card .lv { font-size: 9px; color: #ffe66d; letter-spacing: 0.14em; }
+
+  .question {
+    margin-top: 36px; padding: 18px 22px; background: #14182b;
+    border: 2px dashed #29366f; color: #c2c3c7;
+    font-size: 13px; line-height: 1.7;
+  }
+  .question b { color: #fff7e2; }
+  .question .acc { color: #00e436; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Project K — Meet your hero</h1>
+    <p>Sticking with the human knight metaphor — readable, classic, and the RPG vocabulary (quest, boss, XP) lands instantly. Two playable archetypes at onboarding: <b>Knight</b> (heavy armor, sword &amp; shield) and <b>Queen</b> (regal cloak, crown, rapier). Same sprite skeleton, same evolution stages, same XP economy — different silhouette and palette.</p>
+    <p>Both are gender-neutral as <i>roles</i>, not as bodies — pick whichever silhouette you vibe with. The user names theirs at onboarding.</p>
+  </header>
+
+  <!-- Heroes -->
+  <div class="heroes">
+    <!-- KNIGHT -->
+    <div class="hero" data-tag="HERO · A">
+      <div class="sprite">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+          <!-- shadow -->
+          <rect x="3" y="15" width="10" height="1" fill="#1d2b53" opacity="0.5"/>
+          <!-- legs -->
+          <rect x="5" y="13" width="2" height="2" fill="#c2c3c7"/>
+          <rect x="9" y="13" width="2" height="2" fill="#c2c3c7"/>
+          <rect x="5" y="15" width="2" height="1" fill="#1d2b53"/>
+          <rect x="9" y="15" width="2" height="1" fill="#1d2b53"/>
+          <!-- tunic / belt -->
+          <rect x="4" y="10" width="8" height="3" fill="#29366f"/>
+          <rect x="4" y="12" width="8" height="1" fill="#ffa300"/>
+          <!-- chest plate -->
+          <rect x="4" y="7" width="8" height="3" fill="#c2c3c7"/>
+          <rect x="4" y="7" width="8" height="1" fill="#fff7e2"/>
+          <rect x="7" y="8" width="2" height="2" fill="#ff004d"/><!-- emblem -->
+          <!-- shoulders -->
+          <rect x="3" y="7" width="1" height="2" fill="#fff7e2"/>
+          <rect x="12" y="7" width="1" height="2" fill="#fff7e2"/>
+          <!-- arms -->
+          <rect x="2" y="9" width="2" height="3" fill="#c2c3c7"/>
+          <rect x="12" y="9" width="2" height="3" fill="#c2c3c7"/>
+          <!-- shield (left) -->
+          <rect x="0" y="8" width="2" height="5" fill="#29366f"/>
+          <rect x="0" y="8" width="2" height="1" fill="#fff7e2"/>
+          <rect x="0" y="12" width="2" height="1" fill="#fff7e2"/>
+          <rect x="0" y="10" width="2" height="1" fill="#ffa300"/>
+          <!-- sword (right) -->
+          <rect x="14" y="3" width="1" height="8" fill="#fff7e2"/>
+          <rect x="13" y="11" width="3" height="1" fill="#ffa300"/>
+          <rect x="14" y="12" width="1" height="1" fill="#ffa300"/>
+          <!-- head (skin) -->
+          <rect x="6" y="4" width="4" height="3" fill="#f4a261"/>
+          <!-- eyes -->
+          <rect x="7" y="5" width="1" height="1" fill="#1d2b53"/>
+          <rect x="9" y="5" width="1" height="1" fill="#1d2b53"/>
+          <!-- helmet (open-face) -->
+          <rect x="5" y="2" width="6" height="2" fill="#c2c3c7"/>
+          <rect x="5" y="2" width="6" height="1" fill="#fff7e2"/>
+          <rect x="5" y="4" width="1" height="3" fill="#c2c3c7"/>
+          <rect x="10" y="4" width="1" height="3" fill="#c2c3c7"/>
+          <rect x="5" y="6" width="6" height="1" fill="#c2c3c7"/>
+          <!-- plume -->
+          <rect x="7" y="0" width="2" height="2" fill="#ff004d"/>
+          <rect x="7" y="1" width="2" height="1" fill="#ffa300"/>
+        </svg>
+      </div>
+      <span class="label">★ HERO ARCHETYPE</span>
+      <h2>THE KNIGHT</h2>
+      <p class="desc">Plate armor, open-face helm, crimson plume. Sword &amp; shield silhouette. Reads as "warrior" at 16×16 and again at 192×192.</p>
+      <div class="pal">
+        <i style="background:#c2c3c7"></i>
+        <i style="background:#fff7e2"></i>
+        <i style="background:#29366f"></i>
+        <i style="background:#ffa300"></i>
+        <i style="background:#ff004d"></i>
+        <i style="background:#f4a261"></i>
+      </div>
+    </div>
+
+    <!-- QUEEN -->
+    <div class="hero" data-tag="HERO · B">
+      <div class="sprite">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+          <!-- shadow -->
+          <rect x="2" y="15" width="12" height="1" fill="#1d2b53" opacity="0.5"/>
+          <!-- gown / cloak base -->
+          <rect x="3" y="11" width="10" height="4" fill="#7b2cbf"/>
+          <rect x="3" y="14" width="10" height="1" fill="#5f0f40"/>
+          <rect x="2" y="13" width="1" height="2" fill="#5f0f40"/>
+          <rect x="13" y="13" width="1" height="2" fill="#5f0f40"/>
+          <!-- gown trim -->
+          <rect x="3" y="11" width="10" height="1" fill="#ffe66d"/>
+          <!-- bodice -->
+          <rect x="5" y="8" width="6" height="3" fill="#5f0f40"/>
+          <rect x="5" y="8" width="6" height="1" fill="#ffe66d"/>
+          <rect x="7" y="9" width="2" height="2" fill="#ffe66d"/><!-- jewel -->
+          <!-- shoulders / cloak collar -->
+          <rect x="4" y="7" width="1" height="2" fill="#7b2cbf"/>
+          <rect x="11" y="7" width="1" height="2" fill="#7b2cbf"/>
+          <rect x="3" y="8" width="1" height="3" fill="#7b2cbf"/>
+          <rect x="12" y="8" width="1" height="3" fill="#7b2cbf"/>
+          <!-- arms -->
+          <rect x="4" y="9" width="1" height="3" fill="#f4a261"/>
+          <rect x="11" y="9" width="1" height="3" fill="#f4a261"/>
+          <!-- rapier (right hand) -->
+          <rect x="13" y="2" width="1" height="9" fill="#fff7e2"/>
+          <rect x="12" y="11" width="3" height="1" fill="#ffe66d"/>
+          <rect x="13" y="12" width="1" height="1" fill="#ffe66d"/>
+          <!-- orb (left hand) -->
+          <rect x="2" y="10" width="2" height="2" fill="#ffe66d"/>
+          <rect x="2" y="10" width="1" height="1" fill="#fff7e2"/>
+          <!-- head (skin) -->
+          <rect x="6" y="4" width="4" height="3" fill="#f4a261"/>
+          <!-- hair sides -->
+          <rect x="5" y="5" width="1" height="3" fill="#5f0f40"/>
+          <rect x="10" y="5" width="1" height="3" fill="#5f0f40"/>
+          <!-- eyes -->
+          <rect x="7" y="5" width="1" height="1" fill="#1d2b53"/>
+          <rect x="9" y="5" width="1" height="1" fill="#1d2b53"/>
+          <!-- lips -->
+          <rect x="7" y="6" width="2" height="1" fill="#ff004d"/>
+          <!-- crown -->
+          <rect x="5" y="3" width="6" height="1" fill="#ffe66d"/>
+          <rect x="5" y="2" width="1" height="1" fill="#ffe66d"/>
+          <rect x="7" y="1" width="1" height="2" fill="#ffe66d"/>
+          <rect x="9" y="2" width="1" height="1" fill="#ffe66d"/>
+          <rect x="10" y="2" width="1" height="1" fill="#ffe66d"/>
+          <rect x="8" y="0" width="1" height="1" fill="#ff004d"/><!-- jewel tip -->
+          <rect x="6" y="2" width="1" height="1" fill="#ff004d"/>
+          <rect x="10" y="3" width="1" height="1" fill="#ffe66d"/>
+        </svg>
+      </div>
+      <span class="label">★ HERO ARCHETYPE</span>
+      <h2>THE QUEEN</h2>
+      <p class="desc">Gold crown with jewel, regal violet gown, rapier &amp; orb. Reads as "sovereign" — power without the heavy plate. Same XP economy.</p>
+      <div class="pal">
+        <i style="background:#7b2cbf"></i>
+        <i style="background:#5f0f40"></i>
+        <i style="background:#ffe66d"></i>
+        <i style="background:#fff7e2"></i>
+        <i style="background:#ff004d"></i>
+        <i style="background:#f4a261"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- KNIGHT evolution row -->
+  <div class="section-title">▼ Knight evolution — squire → king</div>
+  <div class="row">
+    <div class="card">
+      <span class="tag">LV 1–4</span>
+      <div class="sprite-sm">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+          <!-- Squire: tunic only, wooden sword -->
+          <rect x="3" y="15" width="10" height="1" fill="#1d2b53" opacity="0.5"/>
+          <rect x="6" y="13" width="2" height="2" fill="#f4a261"/>
+          <rect x="8" y="13" width="2" height="2" fill="#f4a261"/>
+          <rect x="5" y="9" width="6" height="4" fill="#29366f"/>
+          <rect x="5" y="11" width="6" height="1" fill="#ffa300"/>
+          <rect x="4" y="10" width="1" height="2" fill="#f4a261"/>
+          <rect x="11" y="10" width="1" height="2" fill="#f4a261"/>
+          <rect x="6" y="6" width="4" height="3" fill="#f4a261"/>
+          <rect x="7" y="7" width="1" height="1" fill="#1d2b53"/>
+          <rect x="9" y="7" width="1" height="1" fill="#1d2b53"/>
+          <rect x="5" y="5" width="6" height="1" fill="#5f0f40"/>
+          <rect x="12" y="5" width="1" height="6" fill="#ffa300"/>
+        </svg>
+      </div>
+      <span class="nm">Squire</span>
+      <span class="lv">FIRST 7 DAYS</span>
+    </div>
+
+    <div class="card">
+      <span class="tag">LV 5–14</span>
+      <div class="sprite-sm">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+          <!-- Footman: leather + iron sword -->
+          <rect x="3" y="15" width="10" height="1" fill="#1d2b53" opacity="0.5"/>
+          <rect x="6" y="13" width="2" height="2" fill="#5f0f40"/>
+          <rect x="8" y="13" width="2" height="2" fill="#5f0f40"/>
+          <rect x="5" y="8" width="6" height="5" fill="#5f0f40"/>
+          <rect x="5" y="8" width="6" height="1" fill="#c2c3c7"/>
+          <rect x="5" y="11" width="6" height="1" fill="#ffa300"/>
+          <rect x="4" y="9" width="1" height="3" fill="#f4a261"/>
+          <rect x="11" y="9" width="1" height="3" fill="#f4a261"/>
+          <rect x="6" y="5" width="4" height="3" fill="#f4a261"/>
+          <rect x="7" y="6" width="1" height="1" fill="#1d2b53"/>
+          <rect x="9" y="6" width="1" height="1" fill="#1d2b53"/>
+          <rect x="5" y="3" width="6" height="2" fill="#c2c3c7"/>
+          <rect x="13" y="4" width="1" height="7" fill="#fff7e2"/>
+          <rect x="12" y="11" width="3" height="1" fill="#ffa300"/>
+        </svg>
+      </div>
+      <span class="nm">Footman</span>
+      <span class="lv">2 WK — 3 MO</span>
+    </div>
+
+    <div class="card default">
+      <span class="tag">LV 15–34 · DEFAULT</span>
+      <div class="sprite-sm">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+          <!-- Knight (canonical) -->
+          <rect x="3" y="15" width="10" height="1" fill="#1d2b53" opacity="0.5"/>
+          <rect x="5" y="13" width="2" height="2" fill="#c2c3c7"/>
+          <rect x="9" y="13" width="2" height="2" fill="#c2c3c7"/>
+          <rect x="4" y="10" width="8" height="3" fill="#29366f"/>
+          <rect x="4" y="12" width="8" height="1" fill="#ffa300"/>
+          <rect x="4" y="7" width="8" height="3" fill="#c2c3c7"/>
+          <rect x="4" y="7" width="8" height="1" fill="#fff7e2"/>
+          <rect x="7" y="8" width="2" height="2" fill="#ff004d"/>
+          <rect x="3" y="7" width="1" height="2" fill="#fff7e2"/>
+          <rect x="12" y="7" width="1" height="2" fill="#fff7e2"/>
+          <rect x="2" y="9" width="2" height="3" fill="#c2c3c7"/>
+          <rect x="12" y="9" width="2" height="3" fill="#c2c3c7"/>
+          <rect x="0" y="8" width="2" height="5" fill="#29366f"/>
+          <rect x="0" y="10" width="2" height="1" fill="#ffa300"/>
+          <rect x="14" y="3" width="1" height="8" fill="#fff7e2"/>
+          <rect x="13" y="11" width="3" height="1" fill="#ffa300"/>
+          <rect x="6" y="4" width="4" height="3" fill="#f4a261"/>
+          <rect x="7" y="5" width="1" height="1" fill="#1d2b53"/>
+          <rect x="9" y="5" width="1" height="1" fill="#1d2b53"/>
+          <rect x="5" y="2" width="6" height="2" fill="#c2c3c7"/>
+          <rect x="5" y="2" width="6" height="1" fill="#fff7e2"/>
+          <rect x="7" y="0" width="2" height="2" fill="#ff004d"/>
+        </svg>
+      </div>
+      <span class="nm">Knight</span>
+      <span class="lv">3 MO — 1 YR</span>
+    </div>
+
+    <div class="card">
+      <span class="tag">LV 35–69</span>
+      <div class="sprite-sm">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+          <!-- Champion: gold trim, two-handed sword, cape -->
+          <rect x="3" y="15" width="10" height="1" fill="#1d2b53" opacity="0.5"/>
+          <rect x="5" y="13" width="2" height="2" fill="#fff7e2"/>
+          <rect x="9" y="13" width="2" height="2" fill="#fff7e2"/>
+          <!-- cape -->
+          <rect x="2" y="6" width="2" height="9" fill="#5f0f40"/>
+          <rect x="12" y="6" width="2" height="9" fill="#5f0f40"/>
+          <rect x="4" y="10" width="8" height="3" fill="#29366f"/>
+          <rect x="4" y="12" width="8" height="1" fill="#ffe66d"/>
+          <rect x="4" y="7" width="8" height="3" fill="#fff7e2"/>
+          <rect x="4" y="7" width="8" height="1" fill="#ffe66d"/>
+          <rect x="7" y="8" width="2" height="2" fill="#ff004d"/>
+          <rect x="3" y="7" width="1" height="2" fill="#ffe66d"/>
+          <rect x="12" y="7" width="1" height="2" fill="#ffe66d"/>
+          <rect x="3" y="9" width="2" height="3" fill="#fff7e2"/>
+          <rect x="11" y="9" width="2" height="3" fill="#fff7e2"/>
+          <!-- two-handed sword -->
+          <rect x="14" y="2" width="1" height="10" fill="#fff7e2"/>
+          <rect x="13" y="12" width="3" height="1" fill="#ffe66d"/>
+          <rect x="13" y="2" width="3" height="1" fill="#ffe66d"/>
+          <rect x="6" y="4" width="4" height="3" fill="#f4a261"/>
+          <rect x="7" y="5" width="1" height="1" fill="#1d2b53"/>
+          <rect x="9" y="5" width="1" height="1" fill="#1d2b53"/>
+          <rect x="5" y="2" width="6" height="2" fill="#ffe66d"/>
+          <rect x="5" y="2" width="6" height="1" fill="#fff7e2"/>
+          <rect x="7" y="0" width="2" height="2" fill="#ff004d"/>
+          <rect x="6" y="1" width="1" height="1" fill="#ff004d"/>
+          <rect x="9" y="1" width="1" height="1" fill="#ff004d"/>
+        </svg>
+      </div>
+      <span class="nm">Champion</span>
+      <span class="lv">1 — 3 YEARS</span>
+    </div>
+
+    <div class="card">
+      <span class="tag">LV 70+</span>
+      <div class="sprite-sm">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+          <!-- King: heavy armor, big crown, sword + shield, glow -->
+          <rect x="3" y="15" width="10" height="1" fill="#000" opacity="0.7"/>
+          <rect x="5" y="13" width="2" height="2" fill="#ffe66d"/>
+          <rect x="9" y="13" width="2" height="2" fill="#ffe66d"/>
+          <rect x="2" y="6" width="2" height="9" fill="#7b2cbf"/>
+          <rect x="12" y="6" width="2" height="9" fill="#7b2cbf"/>
+          <rect x="4" y="10" width="8" height="3" fill="#5f0f40"/>
+          <rect x="4" y="12" width="8" height="1" fill="#ffe66d"/>
+          <rect x="4" y="7" width="8" height="3" fill="#ffe66d"/>
+          <rect x="4" y="7" width="8" height="1" fill="#fff7e2"/>
+          <rect x="7" y="8" width="2" height="2" fill="#ff004d"/>
+          <rect x="3" y="7" width="1" height="2" fill="#fff7e2"/>
+          <rect x="12" y="7" width="1" height="2" fill="#fff7e2"/>
+          <rect x="3" y="9" width="2" height="3" fill="#ffe66d"/>
+          <rect x="11" y="9" width="2" height="3" fill="#ffe66d"/>
+          <!-- sword + shield -->
+          <rect x="0" y="7" width="2" height="6" fill="#7b2cbf"/>
+          <rect x="0" y="7" width="2" height="1" fill="#ffe66d"/>
+          <rect x="0" y="12" width="2" height="1" fill="#ffe66d"/>
+          <rect x="0" y="9" width="2" height="2" fill="#ff004d"/>
+          <rect x="14" y="2" width="1" height="10" fill="#fff7e2"/>
+          <rect x="13" y="12" width="3" height="1" fill="#ffe66d"/>
+          <rect x="6" y="4" width="4" height="3" fill="#f4a261"/>
+          <rect x="7" y="5" width="1" height="1" fill="#1d2b53"/>
+          <rect x="9" y="5" width="1" height="1" fill="#1d2b53"/>
+          <!-- big crown -->
+          <rect x="4" y="3" width="8" height="1" fill="#ffe66d"/>
+          <rect x="4" y="2" width="1" height="1" fill="#ffe66d"/>
+          <rect x="6" y="1" width="1" height="2" fill="#ffe66d"/>
+          <rect x="8" y="0" width="1" height="3" fill="#ffe66d"/>
+          <rect x="10" y="1" width="1" height="2" fill="#ffe66d"/>
+          <rect x="11" y="2" width="1" height="1" fill="#ffe66d"/>
+          <rect x="6" y="2" width="1" height="1" fill="#ff004d"/>
+          <rect x="8" y="1" width="1" height="1" fill="#ff004d"/>
+          <rect x="10" y="2" width="1" height="1" fill="#ff004d"/>
+        </svg>
+      </div>
+      <span class="nm">King</span>
+      <span class="lv">3 YR+</span>
+    </div>
+  </div>
+
+  <!-- QUEEN evolution row -->
+  <div class="section-title">▼ Queen evolution — page → empress</div>
+  <div class="row">
+    <div class="card">
+      <span class="tag">LV 1–4</span>
+      <div class="sprite-sm">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+          <!-- Page: simple frock -->
+          <rect x="3" y="15" width="10" height="1" fill="#1d2b53" opacity="0.5"/>
+          <rect x="5" y="11" width="6" height="4" fill="#7b2cbf"/>
+          <rect x="5" y="14" width="6" height="1" fill="#5f0f40"/>
+          <rect x="4" y="9" width="1" height="3" fill="#f4a261"/>
+          <rect x="11" y="9" width="1" height="3" fill="#f4a261"/>
+          <rect x="5" y="9" width="6" height="2" fill="#5f0f40"/>
+          <rect x="6" y="6" width="4" height="3" fill="#f4a261"/>
+          <rect x="7" y="7" width="1" height="1" fill="#1d2b53"/>
+          <rect x="9" y="7" width="1" height="1" fill="#1d2b53"/>
+          <rect x="5" y="5" width="6" height="2" fill="#5f0f40"/>
+          <rect x="6" y="4" width="4" height="1" fill="#5f0f40"/>
+        </svg>
+      </div>
+      <span class="nm">Page</span>
+      <span class="lv">FIRST 7 DAYS</span>
+    </div>
+
+    <div class="card">
+      <span class="tag">LV 5–14</span>
+      <div class="sprite-sm">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+          <!-- Lady: small circlet, longer gown -->
+          <rect x="3" y="15" width="10" height="1" fill="#1d2b53" opacity="0.5"/>
+          <rect x="4" y="11" width="8" height="4" fill="#7b2cbf"/>
+          <rect x="4" y="14" width="8" height="1" fill="#5f0f40"/>
+          <rect x="4" y="11" width="8" height="1" fill="#ffe66d"/>
+          <rect x="5" y="8" width="6" height="3" fill="#5f0f40"/>
+          <rect x="7" y="9" width="2" height="1" fill="#ffe66d"/>
+          <rect x="4" y="9" width="1" height="3" fill="#f4a261"/>
+          <rect x="11" y="9" width="1" height="3" fill="#f4a261"/>
+          <rect x="6" y="5" width="4" height="3" fill="#f4a261"/>
+          <rect x="7" y="6" width="1" height="1" fill="#1d2b53"/>
+          <rect x="9" y="6" width="1" height="1" fill="#1d2b53"/>
+          <rect x="5" y="6" width="1" height="2" fill="#5f0f40"/>
+          <rect x="10" y="6" width="1" height="2" fill="#5f0f40"/>
+          <!-- circlet -->
+          <rect x="6" y="4" width="4" height="1" fill="#ffe66d"/>
+          <rect x="7" y="3" width="2" height="1" fill="#ffe66d"/>
+        </svg>
+      </div>
+      <span class="nm">Lady</span>
+      <span class="lv">2 WK — 3 MO</span>
+    </div>
+
+    <div class="card default">
+      <span class="tag">LV 15–34 · DEFAULT</span>
+      <div class="sprite-sm">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+          <!-- Queen (canonical) -->
+          <rect x="2" y="15" width="12" height="1" fill="#1d2b53" opacity="0.5"/>
+          <rect x="3" y="11" width="10" height="4" fill="#7b2cbf"/>
+          <rect x="3" y="14" width="10" height="1" fill="#5f0f40"/>
+          <rect x="2" y="13" width="1" height="2" fill="#5f0f40"/>
+          <rect x="13" y="13" width="1" height="2" fill="#5f0f40"/>
+          <rect x="3" y="11" width="10" height="1" fill="#ffe66d"/>
+          <rect x="5" y="8" width="6" height="3" fill="#5f0f40"/>
+          <rect x="5" y="8" width="6" height="1" fill="#ffe66d"/>
+          <rect x="7" y="9" width="2" height="2" fill="#ffe66d"/>
+          <rect x="4" y="7" width="1" height="2" fill="#7b2cbf"/>
+          <rect x="11" y="7" width="1" height="2" fill="#7b2cbf"/>
+          <rect x="3" y="8" width="1" height="3" fill="#7b2cbf"/>
+          <rect x="12" y="8" width="1" height="3" fill="#7b2cbf"/>
+          <rect x="4" y="9" width="1" height="3" fill="#f4a261"/>
+          <rect x="11" y="9" width="1" height="3" fill="#f4a261"/>
+          <rect x="13" y="2" width="1" height="9" fill="#fff7e2"/>
+          <rect x="12" y="11" width="3" height="1" fill="#ffe66d"/>
+          <rect x="2" y="10" width="2" height="2" fill="#ffe66d"/>
+          <rect x="2" y="10" width="1" height="1" fill="#fff7e2"/>
+          <rect x="6" y="4" width="4" height="3" fill="#f4a261"/>
+          <rect x="5" y="5" width="1" height="3" fill="#5f0f40"/>
+          <rect x="10" y="5" width="1" height="3" fill="#5f0f40"/>
+          <rect x="7" y="5" width="1" height="1" fill="#1d2b53"/>
+          <rect x="9" y="5" width="1" height="1" fill="#1d2b53"/>
+          <rect x="7" y="6" width="2" height="1" fill="#ff004d"/>
+          <rect x="5" y="3" width="6" height="1" fill="#ffe66d"/>
+          <rect x="5" y="2" width="1" height="1" fill="#ffe66d"/>
+          <rect x="7" y="1" width="1" height="2" fill="#ffe66d"/>
+          <rect x="9" y="2" width="1" height="1" fill="#ffe66d"/>
+          <rect x="10" y="2" width="1" height="1" fill="#ffe66d"/>
+          <rect x="8" y="0" width="1" height="1" fill="#ff004d"/>
+          <rect x="6" y="2" width="1" height="1" fill="#ff004d"/>
+        </svg>
+      </div>
+      <span class="nm">Queen</span>
+      <span class="lv">3 MO — 1 YR</span>
+    </div>
+
+    <div class="card">
+      <span class="tag">LV 35–69</span>
+      <div class="sprite-sm">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+          <!-- High Queen: bigger crown, scepter, longer cloak -->
+          <rect x="2" y="15" width="12" height="1" fill="#1d2b53" opacity="0.5"/>
+          <rect x="2" y="11" width="12" height="4" fill="#7b2cbf"/>
+          <rect x="2" y="14" width="12" height="1" fill="#5f0f40"/>
+          <rect x="2" y="11" width="12" height="1" fill="#ffe66d"/>
+          <rect x="5" y="8" width="6" height="3" fill="#5f0f40"/>
+          <rect x="5" y="8" width="6" height="1" fill="#ffe66d"/>
+          <rect x="7" y="9" width="2" height="2" fill="#ff004d"/>
+          <rect x="4" y="7" width="1" height="2" fill="#7b2cbf"/>
+          <rect x="11" y="7" width="1" height="2" fill="#7b2cbf"/>
+          <rect x="3" y="8" width="1" height="3" fill="#7b2cbf"/>
+          <rect x="12" y="8" width="1" height="3" fill="#7b2cbf"/>
+          <rect x="4" y="9" width="1" height="3" fill="#f4a261"/>
+          <rect x="11" y="9" width="1" height="3" fill="#f4a261"/>
+          <!-- scepter -->
+          <rect x="13" y="3" width="1" height="9" fill="#ffe66d"/>
+          <rect x="12" y="2" width="3" height="2" fill="#ff004d"/>
+          <rect x="13" y="1" width="1" height="1" fill="#ffe66d"/>
+          <rect x="6" y="4" width="4" height="3" fill="#f4a261"/>
+          <rect x="5" y="5" width="1" height="3" fill="#5f0f40"/>
+          <rect x="10" y="5" width="1" height="3" fill="#5f0f40"/>
+          <rect x="7" y="5" width="1" height="1" fill="#1d2b53"/>
+          <rect x="9" y="5" width="1" height="1" fill="#1d2b53"/>
+          <rect x="7" y="6" width="2" height="1" fill="#ff004d"/>
+          <!-- big crown -->
+          <rect x="4" y="3" width="8" height="1" fill="#ffe66d"/>
+          <rect x="4" y="2" width="1" height="1" fill="#ffe66d"/>
+          <rect x="6" y="1" width="1" height="2" fill="#ffe66d"/>
+          <rect x="8" y="0" width="1" height="3" fill="#ffe66d"/>
+          <rect x="10" y="1" width="1" height="2" fill="#ffe66d"/>
+          <rect x="11" y="2" width="1" height="1" fill="#ffe66d"/>
+          <rect x="6" y="2" width="1" height="1" fill="#ff004d"/>
+          <rect x="8" y="1" width="1" height="1" fill="#fff7e2"/>
+          <rect x="10" y="2" width="1" height="1" fill="#ff004d"/>
+        </svg>
+      </div>
+      <span class="nm">High Queen</span>
+      <span class="lv">1 — 3 YEARS</span>
+    </div>
+
+    <div class="card">
+      <span class="tag">LV 70+</span>
+      <div class="sprite-sm">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+          <!-- Empress: dark plum, halo crown, fiery jewel, full cloak -->
+          <rect x="2" y="15" width="12" height="1" fill="#000" opacity="0.7"/>
+          <rect x="1" y="11" width="14" height="4" fill="#5f0f40"/>
+          <rect x="1" y="14" width="14" height="1" fill="#000"/>
+          <rect x="1" y="11" width="14" height="1" fill="#ffe66d"/>
+          <rect x="5" y="8" width="6" height="3" fill="#000"/>
+          <rect x="5" y="8" width="6" height="1" fill="#ffe66d"/>
+          <rect x="7" y="9" width="2" height="2" fill="#ff004d"/>
+          <rect x="3" y="7" width="2" height="2" fill="#5f0f40"/>
+          <rect x="11" y="7" width="2" height="2" fill="#5f0f40"/>
+          <rect x="2" y="8" width="2" height="4" fill="#5f0f40"/>
+          <rect x="12" y="8" width="2" height="4" fill="#5f0f40"/>
+          <rect x="4" y="9" width="1" height="3" fill="#f4a261"/>
+          <rect x="11" y="9" width="1" height="3" fill="#f4a261"/>
+          <!-- scepter w/ orb -->
+          <rect x="13" y="3" width="1" height="9" fill="#ffe66d"/>
+          <rect x="12" y="1" width="3" height="3" fill="#ff004d"/>
+          <rect x="13" y="2" width="1" height="1" fill="#ffe66d"/>
+          <rect x="6" y="4" width="4" height="3" fill="#f4a261"/>
+          <rect x="5" y="5" width="1" height="3" fill="#000"/>
+          <rect x="10" y="5" width="1" height="3" fill="#000"/>
+          <rect x="7" y="5" width="1" height="1" fill="#000"/>
+          <rect x="9" y="5" width="1" height="1" fill="#ff004d"/>
+          <rect x="7" y="6" width="2" height="1" fill="#ff004d"/>
+          <!-- halo / spiked crown -->
+          <rect x="3" y="3" width="10" height="1" fill="#ffe66d"/>
+          <rect x="3" y="2" width="1" height="1" fill="#ffe66d"/>
+          <rect x="5" y="1" width="1" height="2" fill="#ffe66d"/>
+          <rect x="7" y="0" width="1" height="3" fill="#ffe66d"/>
+          <rect x="8" y="0" width="1" height="3" fill="#ffe66d"/>
+          <rect x="10" y="1" width="1" height="2" fill="#ffe66d"/>
+          <rect x="12" y="2" width="1" height="1" fill="#ffe66d"/>
+          <rect x="7" y="0" width="2" height="1" fill="#ff004d"/>
+          <rect x="5" y="2" width="1" height="1" fill="#ff004d"/>
+          <rect x="10" y="2" width="1" height="1" fill="#ff004d"/>
+        </svg>
+      </div>
+      <span class="nm">Empress</span>
+      <span class="lv">3 YR+</span>
+    </div>
+  </div>
+
+  <div class="question">
+    <p><b>The hero system, in one minute:</b></p>
+    <p>· <b class="acc">Two archetypes at onboarding:</b> Knight (silver/red, sword &amp; shield) or Queen (violet/gold, rapier &amp; orb). Pick once; can be reskinned later.</p>
+    <p>· <b class="acc">Same five-stage evolution:</b> Squire→Footman→Knight→Champion→King · Page→Lady→Queen→High Queen→Empress. Same level thresholds, same XP curve.</p>
+    <p>· <b class="acc">Cosmetic palette swaps</b> as rewards — earn dyes (crimson, jade, frost, obsidian, gold) by hitting PRs and streak milestones. Same sprite, new colors.</p>
+    <p>· <b class="acc">Behavior maps to training.</b> Workouts level them up, rest days they recover, skip a week and they look weary.</p>
+    <p style="margin-top: 10px;"><b>Sound good?</b> Reply with which archetype to lead with on marketing screens (Knight feels more universal as the first impression), or say "both equal" and we'll show them paired in the onboarding chooser. Then I'll lock in and build the full system: tokens, type, color, components, iOS UI kit.</p>
+  </div>
+</div>
+</body>
+</html>
+</content>
+</invoke>
