@@ -184,6 +184,68 @@ a { color: var(--acc); text-decoration: none; }
 .nav-signout { color: var(--muted); }
 .nav-signout:hover { color: var(--danger); background: rgba(255,71,71,0.08); }
 
+/* ── Mobile hamburger ── */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.hamburger span {
+  display: block;
+  height: 2px;
+  background: var(--muted2);
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+.hamburger:hover span { background: var(--text); }
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.topbar-dropdown {
+  position: absolute;
+  top: var(--topbar-h);
+  left: 0;
+  right: 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0 12px;
+  z-index: 99;
+}
+.dropdown-item {
+  width: 100%;
+  padding: 14px 24px;
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: color 0.15s;
+  min-height: 52px;
+}
+.dropdown-item:hover { color: var(--text); }
+.dropdown-item.active { color: var(--acc); }
+.dropdown-signout { color: var(--muted); margin-top: 4px; }
+.dropdown-signout:hover { color: var(--danger); }
+
+@media (max-width: 640px) {
+  .topbar-nav-desktop { display: none; }
+  .hamburger { display: flex; }
+}
+
 /* ── Page layout ── */
 .page { min-height: 100dvh; }
 .page-content { padding: 32px 20px 80px; max-width: 720px; margin: 0 auto; }
@@ -739,6 +801,41 @@ a { color: var(--acc); text-decoration: none; }
   .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .muscle-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .field-row { grid-template-columns: 1fr; }
+
+  /* Tap target: week/day tabs */
+  .week-tab, .day-tab { min-height: 44px; padding: 0 14px; }
+
+  /* Tap target: exercise card header */
+  .ex-head { padding: 14px 12px; min-height: 60px; }
+
+  /* Tap target: swap / yt buttons */
+  .swap-btn { min-width: 44px; min-height: 44px; padding: 0 10px; }
+
+  /* Tap target: set completion chips — stay at 44px (already set) */
+  /* Effort cells: bump to 44px so thumbs can hit them easily */
+  .set-row-effort .set-cell { height: 44px; font-size: 0.8rem; }
+
+  /* Weight inputs: bigger touch area */
+  .set-row-weight .set-cell.weight-input { height: 44px; font-size: 0.85rem; }
+
+  /* Set cells: slightly wider on small screens to avoid wrap on 4+ sets */
+  .set-cell { width: 48px; flex: 0 0 48px; }
+
+  /* Rest button: full tap area */
+  .rest-btn { min-height: 44px; padding: 0 16px; font-size: 0.85rem; }
+
+  /* Finish button: already full-width, increase height */
+  .btn-finish { min-height: 52px; font-size: 1rem; }
+
+  /* Program header: reduce gap so buttons don't crowd on 390px */
+  .progress-label-row { gap: 6px; }
+  .track-toggle { font-size: 0.7rem; padding: 8px 10px; min-height: 44px; }
+
+  /* Auth card: tighter padding on very small screens */
+  .auth-card { padding: 32px 20px; }
+
+  /* Reduce hero padding */
+  .hero { padding-bottom: 20px; }
 }
 
 /* ── Request Access page ── */
