@@ -1,6 +1,6 @@
 {
   "appId": "com.kpentapalli.projectk.original",
-  "appName": "Project K: Alpha",
+  "appName": "Treno",
   "webDir": "dist",
   "ios": {
     "contentInset": "always"

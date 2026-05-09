@@ -110,7 +110,7 @@ export default function Dashboard() {
 
       <div className="page-content">
         <div className="hero">
-          <div className="hero-label">PROJECT K</div>
+          <div className="hero-label">TRENO</div>
           <h1 className="hero-title">YOUR DASHBOARD</h1>
           {profile?.full_name && (
             <p className="hero-sub">Welcome back, {profile.full_name.split(' ')[0]}.</p>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { Wordmark } from '../components/marks'
 
 export default function ResetPassword() {
   const navigate = useNavigate()
@@ -29,7 +30,7 @@ export default function ResetPassword() {
   return (
     <div className="auth-screen">
       <div className="auth-card">
-        <div className="auth-logo">PROJECT K</div>
+        <div className="auth-logo"><Wordmark size={36} /></div>
         <p className="auth-sub">Set a new password</p>
 
         {done ? (

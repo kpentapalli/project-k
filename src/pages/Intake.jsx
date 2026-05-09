@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { Wordmark } from '../components/marks'
 
 const GOALS = ['Cut', 'Bulk', 'Maintain', 'Athletic Performance']
 const EXPERIENCE = ['Beginner', 'Intermediate', 'Advanced']
@@ -65,7 +66,7 @@ export default function Intake() {
     <div className="intake-screen">
       <div className="intake-card">
         <div className="intake-header">
-          <div className="intake-logo">PROJECT K</div>
+          <div className="intake-logo"><Wordmark size={20} /></div>
           <h1 className="intake-title">Tell us about yourself</h1>
           <p className="intake-sub">This helps us assign the right program for you.</p>
         </div>
