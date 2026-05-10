@@ -7,8 +7,28 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Wordmark, Tagline, Locomotive } from './marks'
 
-// ?splash=long  → extend min display to 10s for design verification
-const MIN_DISPLAY_MS = (typeof window !== 'undefined' && window.location.search.includes('splash=long')) ? 10000 : 1500
+// Splash duration is configurable via URL query for tuning:
+//   ?splash=3     → 3s
+//   ?splash=5     → 5s
+//   ?splash=10    → 10s
+//   ?splash=long  → 10s (back-compat)
+//   ?splash=off   → skip entirely
+//   ?nosplash     → skip (back-compat)
+// Default: 5000ms — long enough to register the brand, short enough to feel snappy.
+const DEFAULT_MIN_DISPLAY_MS = 5000
+
+function getMinDisplay() {
+  if (typeof window === 'undefined') return DEFAULT_MIN_DISPLAY_MS
+  const sp = new URLSearchParams(window.location.search)
+  const v = sp.get('splash')
+  if (v === 'off' || sp.has('nosplash')) return 0
+  if (v === 'long') return 10000
+  const n = Number(v)
+  if (Number.isFinite(n) && n >= 0 && n <= 30) return n * 1000
+  return DEFAULT_MIN_DISPLAY_MS
+}
+
+const MIN_DISPLAY_MS = getMinDisplay()
 const FADE_OUT_MS    = 320    // fade duration
 
 // Inject CSS keyframes once per app session.
@@ -54,11 +74,7 @@ export default function SplashOverlay() {
   }, [visible, loading])
 
   if (!visible) return null
-
-  // Skip splash if URL has ?nosplash (dev convenience)
-  if (typeof window !== 'undefined' && window.location.search.includes('nosplash')) {
-    return null
-  }
+  if (MIN_DISPLAY_MS === 0) return null  // ?splash=off / ?nosplash
 
   return (
     <div
