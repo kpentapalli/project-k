@@ -11,7 +11,20 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "WebFetch(domain:project-k-ten-mu.vercel.app)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npx cap *)",
+      "WebSearch",
+      "Read(//Users/kalyanpentapalli/Downloads/**)",
+      "Bash(mkdir -p /tmp/treno-design)",
+      "Bash(unzip -o \"/Users/kalyanpentapalli/Downloads/Project K _ Design System.zip\" -d /tmp/treno-design)",
+      "Read(//private/tmp/treno-design/treno-brand/**)",
+      "Bash(git reset *)",
+      "Bash(sed -i '' 's|Seed sport supplemental programs|Seed sport-specific programs|' /Users/kalyanpentapalli/Project-K/supabase/seed-sport-programs.sql)",
+      "Bash(sed -i '' -e 's|seed-sport-supplemental-programs.js|seed-sport-programs.js|' -e 's|Seeds supplemental programs|Seeds sport-specific programs|' /Users/kalyanpentapalli/Project-K/scripts/seed-sport-programs.js)",
+      "Bash(cp /Users/kalyanpentapalli/Project-K/supabase/seed-sport-programs.sql supabase/)",
+      "Bash(cp /Users/kalyanpentapalli/Project-K/scripts/seed-sport-programs.js scripts/)",
+      "Bash(git mv *)"
     ]
   }
 }

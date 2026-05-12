@@ -1,5 +1,5 @@
-// SplashOverlay — Treno animated splash shown on initial app mount.
-// Shows the wordmark + tagline + locomotive sliding across a track.
+// WelcomeScreen — Treno animated welcome shown on initial app mount.
+// Wordmark + tagline + locomotive sliding across a track.
 // Dismisses once auth resolves AND a minimum display time has elapsed.
 // Does NOT re-show on logout/login (one-shot per React mount).
 
@@ -14,8 +14,8 @@ import { Wordmark, Tagline, Locomotive } from './marks'
 //   ?splash=long  → 10s (back-compat)
 //   ?splash=off   → skip entirely
 //   ?nosplash     → skip (back-compat)
-// Default: 5000ms — long enough to register the brand, short enough to feel snappy.
-const DEFAULT_MIN_DISPLAY_MS = 5000
+// Default: 10000ms — full brand moment with locomotive animation cycle.
+const DEFAULT_MIN_DISPLAY_MS = 10000
 
 function getMinDisplay() {
   if (typeof window === 'undefined') return DEFAULT_MIN_DISPLAY_MS
@@ -34,9 +34,9 @@ const FADE_OUT_MS    = 320    // fade duration
 // Inject CSS keyframes once per app session.
 function ensureKeyframes() {
   if (typeof document === 'undefined') return
-  if (document.getElementById('treno-splash-keyframes')) return
+  if (document.getElementById('treno-welcome-keyframes')) return
   const style = document.createElement('style')
-  style.id = 'treno-splash-keyframes'
+  style.id = 'treno-welcome-keyframes'
   style.textContent = `
     @keyframes treno-loco-slide {
       0%   { transform: translateX(-60px); }
@@ -54,7 +54,7 @@ function ensureKeyframes() {
   document.head.appendChild(style)
 }
 
-export default function SplashOverlay() {
+export default function WelcomeScreen() {
   const { loading } = useAuth()
   const mountedAt = useRef(Date.now())
   const [visible, setVisible] = useState(true)
@@ -79,7 +79,7 @@ export default function SplashOverlay() {
   return (
     <div
       role="status"
-      aria-label="Treno loading"
+      aria-label="Welcome to Treno"
       style={{
         position: 'fixed',
         inset: 0,
