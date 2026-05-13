@@ -150,12 +150,15 @@ export default function Program() {
   function handleWeightChange(cardKey, si, value) {
     setWeightInputs(prev => {
       const arr = [...(prev[cardKey] || [])]
+      const oldValue = arr[si]
       arr[si] = value
       // Cascade: fill empty subsequent cells with same value (first-session ergonomics).
-      // Skips cells that already have a value (preserves drop sets and pre-filled prev-session weights).
+      // Also overwrite cells that still match oldValue — those were auto-cascaded from
+      // the same source and should track the user's edits (e.g. typing 6 then 0 to make 60).
+      // Cells with a different value are treated as manually-edited drop sets and preserved.
       if (value !== '') {
         for (let i = si + 1; i < arr.length; i++) {
-          if (!arr[i]) arr[i] = value
+          if (!arr[i] || arr[i] === oldValue) arr[i] = value
         }
       }
       return { ...prev, [cardKey]: arr }
@@ -307,12 +310,24 @@ export default function Program() {
   }
 
   function startTimer(key) {
-    if (timers[key]) return
+    // Block restart only while a number is actively counting down.
+    // Once the timer reaches 'GO!' (string) the user can tap to restart immediately.
+    if (typeof timers[key] === 'number') return
     let t = 60
     const id = setInterval(() => {
       t--
-      setTimers(prev => ({ ...prev, [key]: t <= 0 ? 'GO!' : t }))
-      if (t <= 0) clearInterval(id)
+      if (t <= 0) {
+        setTimers(prev => ({ ...prev, [key]: 'GO!' }))
+        clearInterval(id)
+        // Auto-clear the 'GO!' indicator after 3s so the rest button reappears clean
+        setTimeout(() => setTimers(prev => {
+          const next = { ...prev }
+          delete next[key]
+          return next
+        }), 3000)
+      } else {
+        setTimers(prev => ({ ...prev, [key]: t }))
+      }
     }, 1000)
     setTimers(prev => ({ ...prev, [key]: 60 }))
   }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { Wordmark } from '../components/marks'
 
 export default function RequestAccess() {
   const [form, setForm] = useState({ name: '', email: '', message: '' })
@@ -37,7 +38,7 @@ export default function RequestAccess() {
     return (
       <div className="auth-screen">
         <div className="auth-card">
-          <div className="auth-logo">PROJECT K</div>
+          <div className="auth-logo"><Wordmark size={36} /></div>
           <div className="request-success">
             <div className="request-success-icon">✓</div>
             <h2>Request received</h2>
@@ -51,7 +52,7 @@ export default function RequestAccess() {
   return (
     <div className="auth-screen">
       <div className="auth-card">
-        <div className="auth-logo">PROJECT K</div>
+        <div className="auth-logo"><Wordmark size={36} /></div>
         <p className="auth-sub">Request access</p>
 
         <form onSubmit={handleSubmit} className="auth-form">

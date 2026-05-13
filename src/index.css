@@ -1627,3 +1627,77 @@ a { color: var(--acc); text-decoration: none; }
   gap: 12px;
   margin-top: 16px;
 }
+
+/* ──────────────────────────────────────────────────────────────────────
+   Mobile (Capacitor / iOS Safari) — global fixes
+   Activated at <= 600px viewport. Goals:
+     - 44×44 minimum tap targets (iOS HIG)
+     - Inputs ≥ 16px to prevent iOS Safari focus-zoom
+     - TopBar fits 390px viewport (collapse Admin, smaller nav)
+     - Native iOS feel: no tap highlight, safe-area aware, no rubber-band
+   ────────────────────────────────────────────────────────────────────── */
+
+/* iOS-specific base resets — apply at all widths, harmless on desktop */
+html, body {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+* { -webkit-tap-highlight-color: transparent; }
+
+/* Inputs at 16px minimum to defeat iOS focus-zoom; keep desktop at 0.95rem via media */
+input, textarea, select { font-size: 16px; }
+
+/* Safe-area padding so content doesn't run under notch/home-indicator on iOS */
+.topbar { padding-top: env(safe-area-inset-top); height: calc(var(--topbar-h) + env(safe-area-inset-top)); }
+.page-content { padding-bottom: max(80px, env(safe-area-inset-bottom)); }
+
+@media (max-width: 600px) {
+  /* TopBar — collapse for narrow viewports */
+  .topbar { padding: 0 12px; padding-top: env(safe-area-inset-top); }
+  .topbar-logo { font-size: 1.15rem; letter-spacing: 0.06em; }
+  .topbar-nav { gap: 0; }
+  .nav-btn {
+    padding: 10px 8px;
+    min-height: 44px;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+  }
+  /* Hide Admin nav button on mobile — admin work happens on web */
+  .nav-btn.active[class*="admin"], .nav-btn:not(.active) { /* no-op selector */ }
+
+  /* Page padding tighter on mobile */
+  .page-content { padding: 20px 16px max(80px, env(safe-area-inset-bottom)); }
+
+  /* Tap target floor for any button class used on mobile */
+  .btn-primary, .btn-ghost, .switch-btn, .swap-btn, .rest-btn, .show-more-btn,
+  .week-tab, .day-tab, .about-toggle, .feedback-fab {
+    min-height: 44px;
+  }
+
+  /* Workout set grid — ensure tap targets meet 44px on the rows that were too small */
+  .set-row-effort .set-cell { height: 36px; font-size: 0.78rem; }
+  .set-row-weight .set-cell.weight-input { height: 44px; font-size: 16px; }
+  .set-cell { width: 48px; flex: 0 0 48px; }
+
+  /* Modals — full-bleed on small screens with comfortable padding */
+  .modal { padding: 20px 16px; max-width: 100%; }
+  .modal-bg { padding: 12px; }
+
+  /* Auth card — tighter padding, full width */
+  .auth-card { padding: 28px 20px; }
+  .intake-screen { padding: 24px 16px; }
+
+  /* Date picker — iOS Safari renders these terribly without help */
+  .date-input {
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--surface);
+    min-height: 44px;
+  }
+}
+
+/* Hide Admin nav on mobile entirely (Admin still accessible by direct URL) */
+@media (max-width: 600px) {
+  .nav-btn.nav-admin-mobile-hide { display: none; }
+}
+

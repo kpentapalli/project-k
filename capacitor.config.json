@@ -1,0 +1,14 @@
+{
+  "appId": "com.kpentapalli.projectk.original",
+  "appName": "Treno",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "always"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "backgroundColor": "#080809"
+    }
+  }
+}

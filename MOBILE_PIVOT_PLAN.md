@@ -27,8 +27,8 @@ The Mascot RPG work (current branch `claude/practical-robinson-ef7ef5`, current 
 
 Mascot RPG owns `com.kpentapalli.projectk`. The v0 needs a separate App Store Connect record so the existing TestFlight build is untouched.
 
-- Register new App ID at [developer.apple.com/account/resources/identifiers](https://developer.apple.com/account/resources/identifiers) — recommend `com.kpentapalli.projectk.lift` (or your preferred suffix).
-- Create new App Store Connect record at [appstoreconnect.apple.com](https://appstoreconnect.apple.com): name "Project K" (since "Project K: Train" is taken by Mascot RPG slot — pick a distinct name).
+- Bundle ID registered: `com.kpentapalli.projectk.original` (done 2026-05-08)
+- App Store Connect record: "Project K: Aplha" (note: typo for "Alpha" — fix in App Store Connect when convenient)
 - Same Apple Developer account, same registered device — no new account/device work needed.
 
 ### Step 3: Capacitor setup on the new branch
@@ -36,7 +36,7 @@ Mascot RPG owns `com.kpentapalli.projectk`. The v0 needs a separate App Store Co
 Reuses the patterns we just learned. From the `mobile-v0` branch:
 
 - `npm install @capacitor/core @capacitor/cli @capacitor/ios`
-- `npx cap init "Project K" "com.kpentapalli.projectk.lift" --web-dir dist`
+- `npx cap init "Project K" "com.kpentapalli.projectk.original" --web-dir dist`
 - Edit `capacitor.config.json`: `webDir: "dist"`, `ios.contentInset: "always"`, `SplashScreen.backgroundColor: "#0a0a0a"` (or web app theme color — see `src/index.css`).
 - `npm run build && npx cap add ios && cd ios/App && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install`
 - Set Podfile `platform :ios, '15.0'` (Capacitor 8 requires 15+).
@@ -93,7 +93,7 @@ This is your real product to friends. Watch:
 |---|---|
 | New `mobile-v0` branch from `main` | All Track A work |
 | `package.json` | Add `@capacitor/core`, `@capacitor/cli`, `@capacitor/ios` |
-| `capacitor.config.json` (new) | `appId: com.kpentapalli.projectk.lift`, `webDir: dist`, splash bg matching web theme |
+| `capacitor.config.json` (new) | `appId: com.kpentapalli.projectk.original`, `webDir: dist`, splash bg matching web theme |
 | `ios/` (new, generated) | `npx cap add ios` output |
 | `src/index.css` | Mobile-tuned breakpoints, tap target sizing, layout fixes per audit |
 | `src/components/TopBar.jsx` | Collapse to hamburger or bottom nav on mobile |
@@ -117,7 +117,7 @@ PRD recommends (a). Confirm before kickoff.
 ### Step 2: Apple identifiers (third bundle ID)
 
 - Mascot RPG owns `com.kpentapalli.projectk`.
-- Track A v0 owns `com.kpentapalli.projectk.lift`.
+- Track A v0 owns `com.kpentapalli.projectk.original`.
 - Native v1 needs a third — e.g., `com.kpentapalli.projectk.native` (or eventually swap with v0 once native is mature).
 
 ### Step 3: Xcode project bootstrap

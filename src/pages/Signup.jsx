@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { Wordmark } from '../components/marks'
 
 export default function Signup() {
   const { session, profile, loading: authLoading } = useAuth()
@@ -62,7 +63,7 @@ export default function Signup() {
   return (
     <div className="auth-screen">
       <div className="auth-card">
-        <div className="auth-logo">PROJECT K</div>
+        <div className="auth-logo"><Wordmark size={36} /></div>
         <p className="auth-sub">Create your account</p>
 
         <form onSubmit={handleSubmit} className="auth-form">

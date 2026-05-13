@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { Wordmark } from './marks'
 
 export default function TopBar({ active }) {
   const { isAdmin, signOut } = useAuth()
@@ -12,7 +13,9 @@ export default function TopBar({ active }) {
 
   return (
     <header className="topbar">
-      <div className="topbar-logo" onClick={() => navigate('/dashboard')}>PROJECT K</div>
+      <div className="topbar-logo" onClick={() => navigate('/dashboard')}>
+        <Wordmark size={22} />
+      </div>
       <nav className="topbar-nav">
         <button
           className={`nav-btn ${active === 'dashboard' ? 'active' : ''}`}
@@ -34,7 +37,7 @@ export default function TopBar({ active }) {
         </button>
         {isAdmin && (
           <button
-            className={`nav-btn ${active === 'admin' ? 'active' : ''}`}
+            className={`nav-btn nav-admin-mobile-hide ${active === 'admin' ? 'active' : ''}`}
             onClick={() => navigate('/admin')}
           >
             Admin
