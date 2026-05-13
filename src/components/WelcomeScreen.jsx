@@ -23,8 +23,10 @@ function getMinDisplay() {
   const v = sp.get('splash')
   if (v === 'off' || sp.has('nosplash')) return 0
   if (v === 'long') return 10000
-  const n = Number(v)
-  if (Number.isFinite(n) && n >= 0 && n <= 30) return n * 1000
+  if (v !== null) {
+    const n = Number(v)
+    if (Number.isFinite(n) && n >= 0 && n <= 30) return n * 1000
+  }
   return DEFAULT_MIN_DISPLAY_MS
 }
 
