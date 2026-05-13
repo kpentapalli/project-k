@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Capacitor } from '@capacitor/core'
 import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import MobileApp from './mobile/MobileApp'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
 import RequestAccess from './pages/RequestAccess'
@@ -17,6 +19,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/m" element={<MobileApp />}/>
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/request-access" element={<RequestAccess />} />
@@ -46,7 +49,7 @@ export default function App() {
             <ProtectedRoute><Retrospective /></ProtectedRoute>
           } />
 
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to={Capacitor.isNativePlatform() ? '/m' : '/dashboard'} replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
