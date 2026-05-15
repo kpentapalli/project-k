@@ -15,7 +15,7 @@ import { Wordmark, Tagline, Locomotive } from './marks'
 //   ?splash=off   → skip entirely
 //   ?nosplash     → skip (back-compat)
 // Default: 10000ms — full brand moment with locomotive animation cycle.
-const DEFAULT_MIN_DISPLAY_MS = 10000
+const DEFAULT_MIN_DISPLAY_MS = 6000
 
 function getMinDisplay() {
   if (typeof window === 'undefined') return DEFAULT_MIN_DISPLAY_MS

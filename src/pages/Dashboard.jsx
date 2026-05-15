@@ -6,6 +6,7 @@ import FeedbackButton from '../components/FeedbackButton'
 import WeightSection from '../components/WeightSection'
 import ProgramSwitcher from '../components/ProgramSwitcher'
 import { getReadinessState, READINESS_PRIORITY } from '../lib/readiness'
+import { Locomotive } from '../components/marks'
 
 const MUSCLES = ['Chest', 'Shoulders', 'Triceps', 'Back', 'Traps', 'Biceps', 'Legs', 'Calves', 'Abs']
 
@@ -110,8 +111,16 @@ export default function Dashboard() {
 
       <div className="page-content">
         <div className="hero">
-          <div className="hero-label">PROJECT K</div>
-          <h1 className="hero-title">YOUR DASHBOARD</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <Locomotive size={32} />
+            <span style={{
+              fontFamily: "'Bebas Neue', sans-serif",
+              fontSize: 30,
+              letterSpacing: '0.06em',
+              color: '#f2f0e6',
+              lineHeight: 1,
+            }}>TRENO.</span>
+          </div>
           {profile?.full_name && (
             <p className="hero-sub">Welcome back, {profile.full_name.split(' ')[0]}.</p>
           )}
