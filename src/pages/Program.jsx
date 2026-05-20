@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import TopBar from '../components/TopBar'
 import FeedbackButton from '../components/FeedbackButton'
 import { musclesFromDay } from '../lib/muscles'
+import { EXERCISE_LIBRARY, MUSCLE_FILTERS } from '../lib/exercises'
 
 export default function Program() {
   const { session } = useAuth()
@@ -27,6 +28,64 @@ export default function Program() {
   const [completing, setCompleting] = useState(false)
   const [weightInputs, setWeightInputs] = useState({})
   const [trackMore, setTrackMore] = useState(() => localStorage.getItem('pk_track_more') === '1')
+  const [isCustom, setIsCustom] = useState(false)
+  const [showPicker, setShowPicker] = useState(false)
+  const [pickerDay, setPickerDay] = useState(null)
+  const [pickerMuscle, setPickerMuscle] = useState(null)
+  const [pickerSearch, setPickerSearch] = useState('')
+  const [pickerStep, setPickerStep] = useState('list')
+  const [pickerExercise, setPickerExercise] = useState(null)
+  const [pickerForm, setPickerForm] = useState({ sets: 3, reps: '8–12' })
+
+  function openPicker(dayIdx) {
+    setPickerDay(dayIdx)
+    setPickerMuscle(null)
+    setPickerSearch('')
+    setPickerStep('list')
+    setPickerExercise(null)
+    setPickerForm({ sets: 3, reps: '8–12' })
+    setShowPicker(true)
+  }
+
+  async function confirmAddExercise() {
+    if (!pickerExercise || pickerDay === null) return
+    const newStructure = JSON.parse(JSON.stringify(program.structure))
+    const muscleName = pickerExercise.muscle
+    const exEntry = {
+      name: pickerExercise.name,
+      sets: pickerForm.sets,
+      reps: pickerForm.reps,
+      note: '',
+      swap_category: pickerExercise.category,
+    }
+    for (const week of newStructure.weeks) {
+      const day = week.days[pickerDay]
+      if (!day) continue
+      let group = day.groups.find(g => g.name === muscleName.toUpperCase())
+      if (!group) {
+        group = { name: muscleName.toUpperCase(), exercises: [] }
+        day.groups.push(group)
+      }
+      group.exercises.push({ ...exEntry })
+    }
+    await supabase.from('programs').update({ structure: newStructure }).eq('id', program.id)
+    setProgram(prev => ({ ...prev, structure: newStructure }))
+    setShowPicker(false)
+    setOpenCard(null)
+  }
+
+  async function removeExerciseFromDay(dayIdx, gi, ei) {
+    const newStructure = JSON.parse(JSON.stringify(program.structure))
+    for (const week of newStructure.weeks) {
+      const day = week.days[dayIdx]
+      if (!day || !day.groups[gi]) continue
+      day.groups[gi].exercises.splice(ei, 1)
+      if (day.groups[gi].exercises.length === 0) day.groups.splice(gi, 1)
+    }
+    await supabase.from('programs').update({ structure: newStructure }).eq('id', program.id)
+    setProgram(prev => ({ ...prev, structure: newStructure }))
+    setOpenCard(null)
+  }
 
   function toggleTrackMore() {
     setTrackMore(v => {
@@ -60,6 +119,7 @@ export default function Program() {
 
     setAssignment(assignData)
     setProgram(assignData.programs)
+    setIsCustom(!!(assignData.programs?.is_user_created && assignData.programs?.owner_id === session.user.id))
     setLogs(logsRes.data || [])
     setSetLogs(setLogsRes.data || [])
     setSwaps(swapsRes.data || [])
@@ -442,6 +502,12 @@ export default function Program() {
               </button>
             </div>
 
+            {isCustom && (!day.groups || day.groups.length === 0) && (
+              <div className="custom-day-empty">
+                <p>No exercises added for this day yet.</p>
+              </div>
+            )}
+
             {day.groups?.map((group, gi) => (
               <div className="ex-group" key={gi}>
                 <div className="group-name">{group.name}</div>
@@ -482,7 +548,15 @@ export default function Program() {
                             onClick={e => e.stopPropagation()}
                             title="Search on YouTube"
                           >▶</a>
-                          <button className="swap-btn" onClick={e => { e.stopPropagation(); setSwapTarget({ wk: currentWeek, day: currentDay, gi, ei }) }}>⇄</button>
+                          {isCustom ? (
+                            <button
+                              className="swap-btn ex-remove-btn"
+                              onClick={e => { e.stopPropagation(); removeExerciseFromDay(currentDay, gi, ei) }}
+                              title="Remove exercise"
+                            >✕</button>
+                          ) : (
+                            <button className="swap-btn" onClick={e => { e.stopPropagation(); setSwapTarget({ wk: currentWeek, day: currentDay, gi, ei }) }}>⇄</button>
+                          )}
                         </div>
                       </div>
 
@@ -557,6 +631,12 @@ export default function Program() {
               </div>
             ))}
 
+            {isCustom && (
+              <button className="add-exercise-btn" onClick={() => openPicker(currentDay)}>
+                + Add Exercise
+              </button>
+            )}
+
             <button
               className={`btn-finish ${complete ? 'btn-finish-done' : ''}`}
               onClick={openFinishModal}
@@ -615,6 +695,89 @@ export default function Program() {
                 <div className="alt-name">↩ Reset to original</div>
               </div>
               <button className="modal-close" onClick={() => setSwapTarget(null)}>✕ Cancel</button>
+            </div>
+          </div>
+        )
+      })()}
+
+      {showPicker && (() => {
+        const filtered = EXERCISE_LIBRARY
+          .filter(ex => !pickerMuscle || ex.muscle === pickerMuscle)
+          .filter(ex => !pickerSearch.trim() || ex.name.toLowerCase().includes(pickerSearch.toLowerCase()))
+        return (
+          <div className="modal-bg" onClick={() => setShowPicker(false)}>
+            <div className="modal picker-modal" onClick={e => e.stopPropagation()}>
+              {pickerStep === 'list' ? (
+                <>
+                  <div className="modal-title">Add Exercise</div>
+                  <div className="picker-muscle-filter">
+                    {MUSCLE_FILTERS.map(m => (
+                      <button
+                        key={m}
+                        className={`picker-muscle-chip ${(m === 'All' ? null : m) === pickerMuscle ? 'active' : ''}`}
+                        onClick={() => setPickerMuscle(m === 'All' ? null : m)}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    className="picker-search"
+                    type="text"
+                    placeholder="Search..."
+                    value={pickerSearch}
+                    onChange={e => setPickerSearch(e.target.value)}
+                    autoFocus
+                  />
+                  <div className="picker-list">
+                    {filtered.length === 0 ? (
+                      <p className="empty-state" style={{ padding: '16px 0' }}>No exercises match.</p>
+                    ) : filtered.map((ex, i) => (
+                      <div
+                        key={i}
+                        className="picker-item"
+                        onClick={() => { setPickerExercise(ex); setPickerStep('config') }}
+                      >
+                        <div className="picker-item-name">{ex.name}</div>
+                        <div className="picker-item-meta">{ex.muscle} · {ex.equipment}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <button className="modal-close" onClick={() => setShowPicker(false)}>✕ Cancel</button>
+                </>
+              ) : (
+                <>
+                  <div className="modal-title">Configure</div>
+                  <div className="picker-config-card">
+                    <div className="picker-config-name">{pickerExercise.name}</div>
+                    <div className="picker-config-meta">{pickerExercise.muscle} · {pickerExercise.equipment}</div>
+                  </div>
+                  <div className="field-row">
+                    <div className="field">
+                      <label>Sets</label>
+                      <input
+                        type="number"
+                        min="1" max="10"
+                        value={pickerForm.sets}
+                        onChange={e => setPickerForm(p => ({ ...p, sets: Math.max(1, parseInt(e.target.value) || 1) }))}
+                      />
+                    </div>
+                    <div className="field">
+                      <label>Reps</label>
+                      <input
+                        type="text"
+                        value={pickerForm.reps}
+                        placeholder="8–12"
+                        onChange={e => setPickerForm(p => ({ ...p, reps: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  <button className="btn-primary" onClick={confirmAddExercise}>
+                    Add to Day {currentDay + 1}
+                  </button>
+                  <button className="modal-close" onClick={() => setPickerStep('list')}>← Back</button>
+                </>
+              )}
             </div>
           </div>
         )

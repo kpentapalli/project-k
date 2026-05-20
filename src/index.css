@@ -1724,3 +1724,111 @@ a { color: var(--acc); text-decoration: none; }
   gap: 12px;
   margin-top: 16px;
 }
+
+/* ── Custom Program — Dashboard CTA ── */
+.program-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  flex-shrink: 0;
+}
+.btn-build-custom {
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* ── Custom Program — Workout area ── */
+.custom-day-empty {
+  text-align: center;
+  padding: 28px 16px 8px;
+  color: var(--muted2);
+  font-size: 0.85rem;
+}
+
+.add-exercise-btn {
+  width: 100%;
+  padding: 14px;
+  border: 1.5px dashed var(--border2);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted2);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+.add-exercise-btn:hover { border-color: var(--acc); color: var(--acc); }
+
+.ex-remove-btn { color: var(--muted); }
+.ex-remove-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+/* ── Exercise Picker Modal ── */
+.picker-modal {
+  max-height: 88vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.picker-muscle-filter {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  flex-shrink: 0;
+}
+.picker-muscle-filter::-webkit-scrollbar { display: none; }
+
+.picker-muscle-chip {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 99px;
+  border: 1px solid var(--border2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted2);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 36px;
+}
+.picker-muscle-chip:hover { border-color: var(--muted2); color: var(--text); }
+.picker-muscle-chip.active { border-color: var(--acc); color: var(--acc); background: rgba(57,255,138,0.08); }
+
+.picker-search {
+  flex-shrink: 0;
+  width: 100%;
+  margin: 0;
+}
+
+.picker-list {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.picker-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.picker-item:last-child { border-bottom: none; }
+.picker-item:hover { background: rgba(255,255,255,0.03); }
+.picker-item:active { background: rgba(57,255,138,0.05); }
+
+.picker-item-name { font-size: 0.88rem; font-weight: 600; }
+.picker-item-meta { font-size: 0.72rem; color: var(--muted2); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+
+.picker-config-card {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.picker-config-name { font-size: 1rem; font-weight: 700; }
+.picker-config-meta { font-size: 0.78rem; color: var(--muted2); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }

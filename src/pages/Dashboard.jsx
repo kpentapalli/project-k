@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import TopBar from '../components/TopBar'
@@ -36,12 +37,16 @@ function calcStreak(logs) {
 
 export default function Dashboard() {
   const { session, profile } = useAuth()
+  const navigate = useNavigate()
   const [logs, setLogs] = useState([])
   const [weightLogs, setWeightLogs] = useState([])
   const [assignment, setAssignment] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showAllWorkouts, setShowAllWorkouts] = useState(false)
   const [showSwitcher, setShowSwitcher] = useState(false)
+  const [showCustomModal, setShowCustomModal] = useState(false)
+  const [customForm, setCustomForm] = useState({ name: '', weeks: '8', days: '3' })
+  const [creatingCustom, setCreatingCustom] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -72,6 +77,59 @@ export default function Dashboard() {
     }
     load()
   }, [session.user.id])
+
+  async function createCustomProgram() {
+    if (creatingCustom) return
+    setCreatingCustom(true)
+    const weeks = Math.max(1, Math.min(16, parseInt(customForm.weeks) || 8))
+    const days  = Math.max(1, Math.min(7,  parseInt(customForm.days)  || 3))
+    const structure = {
+      weeks: Array.from({ length: weeks }, (_, wi) => ({
+        label: `Week ${wi + 1}`,
+        rep_note: '',
+        days: Array.from({ length: days }, (_, di) => ({
+          title: `Day ${di + 1}`,
+          sub: '',
+          groups: [],
+        })),
+      })),
+      swap_options: {},
+    }
+    const { data: prog, error } = await supabase
+      .from('programs')
+      .insert({
+        name: customForm.name.trim() || 'My Program',
+        description: '',
+        duration_weeks: weeks,
+        days_per_week: days,
+        goal_tag: 'custom',
+        difficulty: 'intermediate',
+        is_active: true,
+        owner_id: session.user.id,
+        is_user_created: true,
+        structure,
+      })
+      .select()
+      .single()
+    if (error) { setCreatingCustom(false); return }
+
+    if (assignment?.id) {
+      await supabase.from('program_assignments')
+        .update({ status: 'completed' })
+        .eq('id', assignment.id)
+    }
+    await supabase.from('program_assignments').insert({
+      user_id:     session.user.id,
+      program_id:  prog.id,
+      start_date:  new Date().toISOString().slice(0, 10),
+      assigned_by: session.user.id,
+      assigned_at: new Date().toISOString(),
+      status:      'active',
+    })
+    setCreatingCustom(false)
+    setShowCustomModal(false)
+    navigate('/program')
+  }
 
   const streak = calcStreak(logs)
   const currentWeek = assignment
@@ -153,11 +211,16 @@ export default function Dashboard() {
                   <div className="program-card-info">
                     <div className="program-card-label">No Active Program</div>
                     <div className="program-card-name">Ready for your next block?</div>
-                    <div className="program-card-meta">Pick a program to start training.</div>
+                    <div className="program-card-meta">Pick a preset or build your own.</div>
                   </div>
-                  <button className="btn-primary btn-choose-program" onClick={() => setShowSwitcher(true)}>
-                    Choose Program
-                  </button>
+                  <div className="program-card-actions">
+                    <button className="btn-primary btn-choose-program" onClick={() => setShowSwitcher(true)}>
+                      Choose Program
+                    </button>
+                    <button className="btn-ghost btn-build-custom" onClick={() => setShowCustomModal(true)}>
+                      Build Custom
+                    </button>
+                  </div>
                 </div>
               )}
             </section>
@@ -172,6 +235,56 @@ export default function Dashboard() {
                 }}
                 onClose={() => setShowSwitcher(false)}
               />
+            )}
+
+            {showCustomModal && (
+              <div className="modal-bg" onClick={() => setShowCustomModal(false)}>
+                <div className="modal" onClick={e => e.stopPropagation()}>
+                  <div className="modal-title">Build Custom Program</div>
+                  <div className="modal-sub">Blank slate — add exercises as you go, week by week.</div>
+
+                  <div className="field">
+                    <label>Program name <span className="optional">(optional)</span></label>
+                    <input
+                      type="text"
+                      value={customForm.name}
+                      onChange={e => setCustomForm(p => ({ ...p, name: e.target.value }))}
+                      placeholder="My Program"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="field-row">
+                    <div className="field">
+                      <label>Weeks</label>
+                      <input
+                        type="number"
+                        min="1" max="16"
+                        value={customForm.weeks}
+                        onChange={e => setCustomForm(p => ({ ...p, weeks: e.target.value }))}
+                      />
+                    </div>
+                    <div className="field">
+                      <label>Days / week</label>
+                      <input
+                        type="number"
+                        min="1" max="7"
+                        value={customForm.days}
+                        onChange={e => setCustomForm(p => ({ ...p, days: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    className="btn-primary"
+                    onClick={createCustomProgram}
+                    disabled={creatingCustom}
+                  >
+                    {creatingCustom ? 'Creating...' : 'Create & Start'}
+                  </button>
+                  <button className="modal-close" onClick={() => setShowCustomModal(false)}>✕ Cancel</button>
+                </div>
+              </div>
             )}
 
             {/* ── Weight & Body Composition ── */}
