@@ -130,3 +130,49 @@ export const EXERCISE_LIBRARY = [
 export const MUSCLE_FILTERS = [
   'All', 'Chest', 'Shoulders', 'Triceps', 'Back', 'Traps', 'Biceps', 'Legs', 'Calves', 'Abs',
 ]
+
+// ── Warm-up library ───────────────────────────────────────────────────────────
+export const WARMUP_LIBRARY = [
+  { name: 'Jumping Jacks',               duration: '2 min' },
+  { name: 'Jump Rope',                   duration: '3 min' },
+  { name: 'High Knees',                  duration: '1 min' },
+  { name: 'Butt Kicks',                  duration: '1 min' },
+  { name: 'Leg Swings (front/back)',     duration: '15 each leg' },
+  { name: 'Leg Swings (side to side)',   duration: '15 each leg' },
+  { name: 'Hip Circles',                 duration: '10 each way' },
+  { name: 'Arm Circles',                 duration: '30 sec each way' },
+  { name: 'Shoulder Rolls',              duration: '10 each way' },
+  { name: 'Inchworm',                    duration: '5 reps' },
+  { name: "World's Greatest Stretch",    duration: '5 each side' },
+  { name: 'Thoracic Rotation',           duration: '10 each side' },
+  { name: 'Hip Flexor Stretch (dynamic)',duration: '10 each side' },
+  { name: 'Cat-Cow',                     duration: '10 reps' },
+  { name: 'Glute Bridge (bodyweight)',   duration: '2×15' },
+  { name: 'Clamshells',                  duration: '2×15 each side' },
+  { name: 'Band Pull-Aparts',            duration: '2×15' },
+  { name: 'Band Face Pull',              duration: '2×15' },
+  { name: 'Shoulder CARs',              duration: '5 each side' },
+  { name: 'Hip CARs',                   duration: '5 each side' },
+]
+
+// ── Cool-down library ─────────────────────────────────────────────────────────
+export const COOLDOWN_LIBRARY = [
+  { name: 'Static Hamstring Stretch',    duration: '30 sec each' },
+  { name: 'Hip Flexor Stretch',          duration: '30 sec each' },
+  { name: 'Quad Stretch',                duration: '30 sec each' },
+  { name: 'Pigeon Pose',                 duration: '60 sec each' },
+  { name: 'Figure-4 Stretch',            duration: '30 sec each' },
+  { name: 'Seated Spinal Twist',         duration: '30 sec each' },
+  { name: 'Child\'s Pose',              duration: '60 sec' },
+  { name: 'Chest Doorframe Stretch',     duration: '30 sec' },
+  { name: 'Lat Stretch',                 duration: '30 sec each' },
+  { name: 'Standing Calf Stretch',       duration: '30 sec each' },
+  { name: 'Upper Back Stretch',          duration: '30 sec' },
+  { name: 'Neck Stretch',                duration: '30 sec each side' },
+  { name: 'Seated Hamstring Stretch',    duration: '30 sec each' },
+  { name: 'Foam Roll Quads',             duration: '60 sec each' },
+  { name: 'Foam Roll IT Band',           duration: '60 sec each' },
+  { name: 'Foam Roll Upper Back',        duration: '60 sec' },
+  { name: 'Foam Roll Calves',            duration: '60 sec each' },
+  { name: 'Box Breathing',               duration: '2 min' },
+]

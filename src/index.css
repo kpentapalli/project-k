@@ -1832,3 +1832,128 @@ a { color: var(--acc); text-decoration: none; }
 }
 .picker-config-name { font-size: 1rem; font-weight: 700; }
 .picker-config-meta { font-size: 0.78rem; color: var(--muted2); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+/* ── Warm-Up / Cool-Down sections ── */
+.wc-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+.warmup-section  { border-left: 3px solid var(--warn); }
+.cooldown-section { border-left: 3px solid #60a5fa; }
+
+.wc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.wc-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.wc-label-warm { color: var(--warn); }
+.wc-label-cool { color: #60a5fa; }
+
+.wc-add-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  padding: 4px 10px;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted2);
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 32px;
+}
+.wc-add-btn:hover { border-color: var(--acc); color: var(--acc); }
+
+.wc-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.wc-item:last-child { border-bottom: none; }
+
+.wc-check {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  background: transparent;
+  color: transparent;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.wc-check.done { border-color: var(--acc); background: var(--acc); color: #000; }
+
+.wc-name { flex: 1; font-size: 0.85rem; }
+.wc-duration {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted2);
+  flex-shrink: 0;
+}
+.wc-remove {
+  color: var(--muted);
+  font-size: 0.72rem;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.wc-remove:hover { color: var(--danger); }
+.wc-placeholder { font-size: 0.8rem; color: var(--muted); font-style: italic; padding: 4px 0; }
+
+/* ── Skip Day ── */
+.btn-skip-day {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-skip-day:hover { border-color: var(--muted2); color: var(--muted2); }
+
+.btn-finish-skipped {
+  background: var(--surface) !important;
+  border-color: var(--border2) !important;
+  color: var(--muted2) !important;
+  cursor: default;
+}
+
+.day-tab.skipped {
+  border-color: rgba(255,255,255,0.12);
+  color: var(--muted);
+}
+.day-tab.skipped.active {
+  border-color: var(--muted2);
+  color: var(--muted2);
+  background: rgba(255,255,255,0.04);
+}
+
+@media (max-width: 480px) {
+  .wc-check { width: 36px; height: 36px; }
+  .wc-add-btn { min-height: 44px; }
+}

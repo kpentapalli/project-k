@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import TopBar from '../components/TopBar'
 import FeedbackButton from '../components/FeedbackButton'
 import { musclesFromDay } from '../lib/muscles'
-import { EXERCISE_LIBRARY, MUSCLE_FILTERS } from '../lib/exercises'
+import { EXERCISE_LIBRARY, MUSCLE_FILTERS, WARMUP_LIBRARY, COOLDOWN_LIBRARY } from '../lib/exercises'
 
 export default function Program() {
   const { session } = useAuth()
@@ -36,15 +36,65 @@ export default function Program() {
   const [pickerStep, setPickerStep] = useState('list')
   const [pickerExercise, setPickerExercise] = useState(null)
   const [pickerForm, setPickerForm] = useState({ sets: 3, reps: '8–12' })
+  const [pickerSection, setPickerSection] = useState('main')
+  const [wcChecked, setWcChecked] = useState({})
 
-  function openPicker(dayIdx) {
+  function openPicker(dayIdx, section = 'main') {
     setPickerDay(dayIdx)
+    setPickerSection(section)
     setPickerMuscle(null)
     setPickerSearch('')
     setPickerStep('list')
     setPickerExercise(null)
     setPickerForm({ sets: 3, reps: '8–12' })
     setShowPicker(true)
+  }
+
+  function toggleWcCheck(key) {
+    setWcChecked(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  function isDaySkipped(wkIdx, dayIdx) {
+    return logs.some(l => l.week_index === wkIdx && l.day_index === dayIdx && l.skipped === true)
+  }
+
+  async function skipDay() {
+    if (isDayComplete(currentWeek, currentDay)) return
+    const { data } = await supabase.from('workout_logs').insert({
+      user_id:       session.user.id,
+      program_id:    assignment.program_id,
+      week_index:    currentWeek,
+      day_index:     currentDay,
+      day_title:     day?.title,
+      muscle_groups: [],
+      skipped:       true,
+      completed_at:  new Date().toISOString(),
+    }).select().single()
+    if (data) setLogs(prev => [...prev, data])
+  }
+
+  async function addWcItem(item) {
+    const newStructure = JSON.parse(JSON.stringify(program.structure))
+    for (const week of newStructure.weeks) {
+      const d = week.days[pickerDay]
+      if (!d) continue
+      if (!d[pickerSection]) d[pickerSection] = []
+      d[pickerSection].push({ name: item.name, duration: item.duration })
+    }
+    await supabase.from('programs').update({ structure: newStructure }).eq('id', program.id)
+    setProgram(prev => ({ ...prev, structure: newStructure }))
+    setShowPicker(false)
+  }
+
+  async function removeWcItem(section, itemIdx) {
+    const newStructure = JSON.parse(JSON.stringify(program.structure))
+    for (const week of newStructure.weeks) {
+      const d = week.days[currentDay]
+      if (!d || !d[section]) continue
+      d[section].splice(itemIdx, 1)
+    }
+    await supabase.from('programs').update({ structure: newStructure }).eq('id', program.id)
+    setProgram(prev => ({ ...prev, structure: newStructure }))
   }
 
   async function confirmAddExercise() {
@@ -470,15 +520,19 @@ export default function Program() {
         )}
 
         <div className="day-tabs">
-          {Array.from({ length: program.days_per_week }).map((_, di) => (
-            <button
-              key={di}
-              className={`day-tab ${currentDay === di ? 'active' : ''} ${isDayComplete(currentWeek, di) ? 'done' : ''}`}
-              onClick={() => { setCurrentDay(di); setOpenCard(null) }}
-            >
-              Day {di + 1}{isDayComplete(currentWeek, di) ? ' ✓' : ''}
-            </button>
-          ))}
+          {Array.from({ length: program.days_per_week }).map((_, di) => {
+            const done    = isDayComplete(currentWeek, di)
+            const skipped = done && isDaySkipped(currentWeek, di)
+            return (
+              <button
+                key={di}
+                className={`day-tab ${currentDay === di ? 'active' : ''} ${skipped ? 'skipped' : done ? 'done' : ''}`}
+                onClick={() => { setCurrentDay(di); setOpenCard(null) }}
+              >
+                Day {di + 1}{skipped ? ' ⊘' : done ? ' ✓' : ''}
+              </button>
+            )
+          })}
         </div>
 
         {day && (
@@ -502,6 +556,36 @@ export default function Program() {
               </button>
             </div>
 
+            {/* ── Warm-Up ── */}
+            {(day.warm_up?.length > 0 || isCustom) && (
+              <div className="wc-section warmup-section">
+                <div className="wc-header">
+                  <span className="wc-label wc-label-warm">Warm-Up</span>
+                  {isCustom && (
+                    <button className="wc-add-btn" onClick={() => openPicker(currentDay, 'warm_up')}>+ Add</button>
+                  )}
+                </div>
+                {day.warm_up?.length > 0 ? day.warm_up.map((item, i) => {
+                  const key = `${currentWeek}-${currentDay}-wu-${i}`
+                  return (
+                    <div className="wc-item" key={i}>
+                      <button className={`wc-check ${wcChecked[key] ? 'done' : ''}`} onClick={() => toggleWcCheck(key)}>
+                        {wcChecked[key] ? '✓' : ''}
+                      </button>
+                      <div className="wc-name">{item.name}</div>
+                      <div className="wc-duration">{item.duration}</div>
+                      {isCustom && (
+                        <button className="wc-remove" onClick={() => removeWcItem('warm_up', i)}>✕</button>
+                      )}
+                    </div>
+                  )
+                }) : (
+                  <p className="wc-placeholder">No warm-up exercises added yet.</p>
+                )}
+              </div>
+            )}
+
+            {/* ── Main Workout ── */}
             {isCustom && (!day.groups || day.groups.length === 0) && (
               <div className="custom-day-empty">
                 <p>No exercises added for this day yet.</p>
@@ -632,18 +716,52 @@ export default function Program() {
             ))}
 
             {isCustom && (
-              <button className="add-exercise-btn" onClick={() => openPicker(currentDay)}>
+              <button className="add-exercise-btn" onClick={() => openPicker(currentDay, 'main')}>
                 + Add Exercise
               </button>
             )}
 
+            {/* ── Cool-Down ── */}
+            {(day.cool_down?.length > 0 || isCustom) && (
+              <div className="wc-section cooldown-section">
+                <div className="wc-header">
+                  <span className="wc-label wc-label-cool">Cool-Down</span>
+                  {isCustom && (
+                    <button className="wc-add-btn" onClick={() => openPicker(currentDay, 'cool_down')}>+ Add</button>
+                  )}
+                </div>
+                {day.cool_down?.length > 0 ? day.cool_down.map((item, i) => {
+                  const key = `${currentWeek}-${currentDay}-cd-${i}`
+                  return (
+                    <div className="wc-item" key={i}>
+                      <button className={`wc-check ${wcChecked[key] ? 'done' : ''}`} onClick={() => toggleWcCheck(key)}>
+                        {wcChecked[key] ? '✓' : ''}
+                      </button>
+                      <div className="wc-name">{item.name}</div>
+                      <div className="wc-duration">{item.duration}</div>
+                      {isCustom && (
+                        <button className="wc-remove" onClick={() => removeWcItem('cool_down', i)}>✕</button>
+                      )}
+                    </div>
+                  )
+                }) : (
+                  <p className="wc-placeholder">No cool-down exercises added yet.</p>
+                )}
+              </div>
+            )}
+
             <button
-              className={`btn-finish ${complete ? 'btn-finish-done' : ''}`}
+              className={`btn-finish ${complete ? (isDaySkipped(currentWeek, currentDay) ? 'btn-finish-skipped' : 'btn-finish-done') : ''}`}
               onClick={openFinishModal}
               disabled={complete}
             >
-              {complete ? '✓ Workout Logged' : 'Finish & Log Workout'}
+              {complete
+                ? isDaySkipped(currentWeek, currentDay) ? '⊘ Day Skipped' : '✓ Workout Logged'
+                : 'Finish & Log Workout'}
             </button>
+            {!complete && (
+              <button className="btn-skip-day" onClick={skipDay}>Skip Day</button>
+            )}
           </div>
         )}
       </div>
@@ -701,26 +819,35 @@ export default function Program() {
       })()}
 
       {showPicker && (() => {
-        const filtered = EXERCISE_LIBRARY
-          .filter(ex => !pickerMuscle || ex.muscle === pickerMuscle)
-          .filter(ex => !pickerSearch.trim() || ex.name.toLowerCase().includes(pickerSearch.toLowerCase()))
+        const isWcPicker = pickerSection === 'warm_up' || pickerSection === 'cool_down'
+        const wcLibrary  = pickerSection === 'warm_up' ? WARMUP_LIBRARY : COOLDOWN_LIBRARY
+        const filtered = isWcPicker
+          ? wcLibrary.filter(item => !pickerSearch.trim() || item.name.toLowerCase().includes(pickerSearch.toLowerCase()))
+          : EXERCISE_LIBRARY
+              .filter(ex => !pickerMuscle || ex.muscle === pickerMuscle)
+              .filter(ex => !pickerSearch.trim() || ex.name.toLowerCase().includes(pickerSearch.toLowerCase()))
+
+        const pickerTitle = pickerSection === 'warm_up' ? 'Add Warm-Up' : pickerSection === 'cool_down' ? 'Add Cool-Down' : 'Add Exercise'
+
         return (
           <div className="modal-bg" onClick={() => setShowPicker(false)}>
             <div className="modal picker-modal" onClick={e => e.stopPropagation()}>
               {pickerStep === 'list' ? (
                 <>
-                  <div className="modal-title">Add Exercise</div>
-                  <div className="picker-muscle-filter">
-                    {MUSCLE_FILTERS.map(m => (
-                      <button
-                        key={m}
-                        className={`picker-muscle-chip ${(m === 'All' ? null : m) === pickerMuscle ? 'active' : ''}`}
-                        onClick={() => setPickerMuscle(m === 'All' ? null : m)}
-                      >
-                        {m}
-                      </button>
-                    ))}
-                  </div>
+                  <div className="modal-title">{pickerTitle}</div>
+                  {!isWcPicker && (
+                    <div className="picker-muscle-filter">
+                      {MUSCLE_FILTERS.map(m => (
+                        <button
+                          key={m}
+                          className={`picker-muscle-chip ${(m === 'All' ? null : m) === pickerMuscle ? 'active' : ''}`}
+                          onClick={() => setPickerMuscle(m === 'All' ? null : m)}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <input
                     className="picker-search"
                     type="text"
@@ -731,15 +858,17 @@ export default function Program() {
                   />
                   <div className="picker-list">
                     {filtered.length === 0 ? (
-                      <p className="empty-state" style={{ padding: '16px 0' }}>No exercises match.</p>
-                    ) : filtered.map((ex, i) => (
+                      <p className="empty-state" style={{ padding: '16px 0' }}>No matches.</p>
+                    ) : filtered.map((item, i) => (
                       <div
                         key={i}
                         className="picker-item"
-                        onClick={() => { setPickerExercise(ex); setPickerStep('config') }}
+                        onClick={() => isWcPicker ? addWcItem(item) : (setPickerExercise(item), setPickerStep('config'))}
                       >
-                        <div className="picker-item-name">{ex.name}</div>
-                        <div className="picker-item-meta">{ex.muscle} · {ex.equipment}</div>
+                        <div className="picker-item-name">{item.name}</div>
+                        <div className="picker-item-meta">
+                          {isWcPicker ? item.duration : `${item.muscle} · ${item.equipment}`}
+                        </div>
                       </div>
                     ))}
                   </div>
