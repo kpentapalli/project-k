@@ -8,3 +8,6 @@ dist
 .claude/worktrees/
 .claude/projects/
 .claude/sessions/
+
+# Build output (belt and braces; Vite uses dist/)
+.next
